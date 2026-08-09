@@ -397,9 +397,9 @@
     <div class="event-sub" id="eventSub">หอประชุมใหญ่ มหาวิทยาลัยอุบลราชธานี · เริ่ม 08:30 น.</div>
 
     <div class="qr-frame">
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="qrsvg">
+      <img id="qrImage" alt="QR Code เช็คชื่อ" style="width:100%; height:auto; display:block; border-radius:4px;" src="">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="qrPlaceholder">
         <rect width="200" height="200" fill="#fff"/>
-        <g fill="#132038" id="qrDots"></g>
         <rect x="10" y="10" width="40" height="40" fill="none" stroke="#132038" stroke-width="6"/>
         <rect x="22" y="22" width="16" height="16" fill="#132038"/>
         <rect x="150" y="10" width="40" height="40" fill="none" stroke="#132038" stroke-width="6"/>
@@ -407,6 +407,10 @@
         <rect x="10" y="150" width="40" height="40" fill="none" stroke="#132038" stroke-width="6"/>
         <rect x="22" y="162" width="16" height="16" fill="#132038"/>
       </svg>
+    </div>
+
+    <div class="fallback-code-row" id="manualCodeDisplay" style="display:none; text-align:center; margin-top:10px; font-size:13px; color:#5B6472;">
+      หากสแกนไม่ได้ ให้แจ้งรหัสนี้แก่นักศึกษา: <b id="manualCodeText" style="font-family:monospace; font-size:16px; letter-spacing:2px;"></b>
     </div>
 
     <div class="refresh-row">
@@ -493,8 +497,70 @@
       if (registeredEl && ev.kpiAttendTarget) {
         registeredEl.textContent = ev.kpiAttendTarget;
       }
+
+      renderRealQrCode(ev);
     } catch (e) {
       console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
+    }
+  }
+
+  // Renders an actual scannable QR code (via api.qrserver.com) encoding the event's id
+  // as JSON, matching the format Scan.html expects when decoding with jsQR.
+  // Also shows/generates a manual fallback code for the "กรอกรหัสกิจกรรมด้วยตนเอง" flow.
+  function renderRealQrCode(ev) {
+    const qrImg = document.getElementById('qrImage');
+    const placeholder = document.getElementById('qrPlaceholder');
+    if (!qrImg) return;
+
+    const payload = JSON.stringify({ eventId: ev.id });
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(payload);
+
+    qrImg.onload = () => {
+      qrImg.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    };
+    qrImg.onerror = () => {
+      // If the QR generation API is unreachable, keep showing the decorative
+      // placeholder and rely on the manual code fallback instead.
+      qrImg.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'block';
+    };
+    qrImg.src = qrUrl;
+
+    // Manual fallback code: derive a stable-looking 6-digit code from the event id
+    // so students who can't scan can still be checked in via Scan.html's manual entry.
+    if (!ev.manualCode) {
+      ev.manualCode = String(Math.abs(hashCode(ev.id))).slice(0, 6).padStart(6, '0');
+      persistManualCode(ev);
+    }
+    const codeEl = document.getElementById('manualCodeText');
+    const codeRow = document.getElementById('manualCodeDisplay');
+    if (codeEl && ev.manualCode) {
+      codeEl.textContent = ev.manualCode;
+      if (codeRow) codeRow.style.display = 'block';
+    }
+  }
+
+  function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  async function persistManualCode(ev) {
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      const idx = events.findIndex(e => e.id === ev.id);
+      if (idx !== -1) {
+        events[idx].manualCode = ev.manualCode;
+        await window.storage.set("events-list", JSON.stringify(events), true);
+      }
+    } catch (e) {
+      console.error("บันทึกรหัสสำรองไม่สำเร็จ", e);
     }
   }
   loadEventFromUrl();
@@ -586,16 +652,19 @@
   setInterval(tickCountdown, 1000);
 
   const dots = document.getElementById('qrDots');
-  let dotsSvg = '';
-  for(let i=0;i<12;i++){
-    for(let j=0;j<12;j++){
-      if((i+j*3)%5===0 || (i*2+j)%7===0){
-        if((i<5&&j<5)||(i>6&&j<5)||(i<5&&j>6)) continue;
-        dotsSvg += '<rect x="' + (55+i*8) + '" y="' + (55+j*8) + '" width="7" height="7"/>';
+  if (dots) {
+    // Legacy decorative dots (kept only if an older cached page still has the element).
+    let dotsSvg = '';
+    for(let i=0;i<12;i++){
+      for(let j=0;j<12;j++){
+        if((i+j*3)%5===0 || (i*2+j)%7===0){
+          if((i<5&&j<5)||(i>6&&j<5)||(i<5&&j>6)) continue;
+          dotsSvg += '<rect x="' + (55+i*8) + '" y="' + (55+j*8) + '" width="7" height="7"/>';
+        }
       }
     }
+    dots.innerHTML = dotsSvg;
   }
-  dots.innerHTML = dotsSvg;
 
   document.getElementById('close-checkin-btn').addEventListener('click', () => {
     if (confirm('ยืนยันปิดการเช็คชื่อกิจกรรมนี้และกลับไปหน้าจัดการกิจกรรม?')) {
