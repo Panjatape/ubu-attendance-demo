@@ -46,6 +46,7 @@
     };
   }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scan QR &amp; Check-in | UBU Attendance</title>
@@ -192,6 +193,21 @@
     justify-content:center;
     margin-bottom:16px;
   }
+  #camVideo{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    z-index:0;
+  }
+  .cam-noise, .viewfinder{
+    position:relative;
+    z-index:1;
+  }
+  .cam-hint.error{
+    color:#F0A897;
+  }
   .cam-noise{
     position:absolute;
     inset:0;
@@ -231,6 +247,7 @@
     text-align:center;
     font-size:12.5px;
     color:#C7CEDB;
+    z-index:1;
   }
   .scan-action{
     text-align:center;
@@ -659,6 +676,8 @@
     <!-- 1. SCAN -->
     <div class="view active" id="view-scan">
       <div class="cam-wrap">
+        <video id="camVideo" autoplay playsinline muted></video>
+        <canvas id="camCanvas" style="display:none;"></canvas>
         <div class="cam-noise"></div>
         <div class="viewfinder">
           <div class="corner tl"></div>
@@ -667,7 +686,7 @@
           <div class="corner br"></div>
           <div class="laser"></div>
         </div>
-        <div class="cam-hint">จัดกรอบให้ตรง QR Code หน้าห้องเรียน</div>
+        <div class="cam-hint" id="camHint">จัดกรอบให้ตรง QR Code หน้าห้องเรียน</div>
       </div>
       <div class="scan-action">
         <p id="scanActionHint">ระบบจะตรวจสอบตำแหน่งของท่านโดยอัตโนมัติ<br>หลังสแกนสำเร็จ</p>
@@ -835,6 +854,13 @@
     if(match) match.classList.add('active');
     document.getElementById('topTitle').textContent = titleMap[name][0];
     document.getElementById('topSub').textContent = titleMap[name][1] || currentEventName;
+
+    if (name === 'scan') {
+      qrHasFired = false;
+      if (!cameraStream) startCamera();
+    } else if (cameraStream) {
+      stopCamera();
+    }
   }
 
   btns.forEach(b => b.addEventListener('click', () => goto(b.dataset.view)));
@@ -850,6 +876,9 @@
   let currentUser = null;
   let scanStage = "checkin"; // "checkin" | "checkout"
   let pendingFailReason = null; // "geo" | "camera" | "network"
+  let cameraStream = null;
+  let scanLoopHandle = null;
+  let qrHasFired = false; // prevents double-triggering once a valid code is found
 
   function getSessionUser() {
     try { return JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { return null; }
@@ -958,7 +987,107 @@
     }
   }
 
-  loadEventFromUrl();
+  // ---------- Real camera + QR decoding ----------
+  async function startCamera() {
+    const video = document.getElementById('camVideo');
+    const canvas = document.getElementById('camCanvas');
+    const hint = document.getElementById('camHint');
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (hint) { hint.textContent = 'อุปกรณ์นี้ไม่รองรับกล้อง ใช้ปุ่ม "จำลองการสแกนสำเร็จ" แทนได้'; hint.classList.add('error'); }
+      return;
+    }
+    if (typeof jsQR === 'undefined') {
+      if (hint) { hint.textContent = 'โหลดตัวอ่าน QR ไม่สำเร็จ ใช้ปุ่มด้านล่างแทนได้'; hint.classList.add('error'); }
+      return;
+    }
+
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+      video.srcObject = cameraStream;
+      await video.play();
+      requestAnimationFrame(scanFrame);
+    } catch (err) {
+      if (hint) {
+        hint.textContent = err.name === 'NotAllowedError'
+          ? 'กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง แล้วรีเฟรชหน้านี้'
+          : 'ไม่สามารถเปิดกล้องได้ ใช้ปุ่ม "จำลองการสแกนสำเร็จ" แทนได้';
+        hint.classList.add('error');
+      }
+      resolveFail('camera');
+    }
+  }
+
+  function stopCamera() {
+    if (scanLoopHandle) cancelAnimationFrame(scanLoopHandle);
+    scanLoopHandle = null;
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+    }
+  }
+
+  function scanFrame() {
+    const video = document.getElementById('camVideo');
+    const canvas = document.getElementById('camCanvas');
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      scanLoopHandle = requestAnimationFrame(scanFrame);
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+
+    if (code && code.data && !qrHasFired) {
+      handleQrDetected(code.data);
+    } else {
+      scanLoopHandle = requestAnimationFrame(scanFrame);
+    }
+  }
+
+  function handleQrDetected(rawText) {
+    qrHasFired = true;
+    stopCamera();
+
+    // The event's QR encodes JSON like {"eventId":"...", ...} (matches how QR codes are
+    // generated elsewhere in the app via api.qrserver.com). Accept either JSON or a plain event id string.
+    let scannedEventId = null;
+    try {
+      const parsed = JSON.parse(rawText);
+      scannedEventId = parsed.eventId || parsed.CourseID || parsed.SessionID || null;
+    } catch (e) {
+      scannedEventId = rawText.trim();
+    }
+
+    if (!currentEventId) {
+      // No event specified in the URL — trust whatever the QR contains.
+      currentEventId = scannedEventId;
+      goto('verify');
+      runVerification();
+      return;
+    }
+
+    if (scannedEventId && scannedEventId === currentEventId) {
+      goto('verify');
+      runVerification();
+    } else {
+      resolveFail('wrong-qr');
+    }
+  }
+
+  loadEventFromUrl().then(() => {
+    if (scanStage !== 'blocked-duplicate') {
+      startCamera();
+    }
+  });
+
+  window.addEventListener('beforeunload', stopCamera);
 </script>
 
 <script>
@@ -1284,6 +1413,13 @@
       reasonBox.style.display = 'flex';
       reasonText.textContent = 'ไม่สามารถอ่านรหัส QR ได้ อาจเกิดจากกล้องอุปกรณ์ แสงสะท้อน หรือ QR Code หมดอายุ';
       fallbackHint.textContent = 'ท่านสามารถกรอกรหัสกิจกรรมที่อาจารย์แจ้งหน้าห้องแทนการสแกนได้';
+      manualBtn.style.display = 'block';
+    } else if (reason === 'wrong-qr') {
+      titleEl.textContent = 'QR Code ไม่ตรงกับกิจกรรมนี้';
+      subEl.textContent = 'กรุณาสแกน QR ที่หน้าห้องเรียนของกิจกรรมนี้';
+      reasonBox.style.display = 'flex';
+      reasonText.textContent = 'รหัสที่สแกนได้ไม่ตรงกับกิจกรรมที่ท่านกำลังเช็คชื่ออยู่ กรุณาตรวจสอบว่าสแกน QR ถูกจุด';
+      fallbackHint.textContent = 'หาก QR Code หน้าห้องเรียนใช้งานไม่ได้ ท่านสามารถกรอกรหัสกิจกรรมแทนได้';
       manualBtn.style.display = 'block';
     } else if (reason === 'overlap') {
       titleEl.textContent = 'ไม่สามารถเช็คชื่อได้';
