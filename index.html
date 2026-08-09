@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ | ระบบเช็คชื่อกิจกรรม UBU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+  }
+
+  .card{
+    width:100%;
+    max-width:400px;
+    opacity:0;
+    animation:riseIn .6s cubic-bezier(.16,1,.3,1) .05s forwards;
+  }
+  @keyframes riseIn{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .brand-mini{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+  }
+  .brand-mark{
+    width:36px;height:36px;
+    border:1.5px solid var(--gold-500);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--gold-600);
+    flex-shrink:0;
+    position:relative;
+  }
+  .brand-mark::after{
+    content:"";
+    position:absolute;
+    inset:-4px;
+    border-radius:50%;
+    border:1px solid var(--gold-500);
+    opacity:0;
+    animation:pulseRing 2.6s ease-out infinite;
+  }
+  @keyframes pulseRing{
+    0%{opacity:.55; transform:scale(0.9);}
+    100%{opacity:0; transform:scale(1.35);}
+  }
+  .brand-name{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:15px;
+    line-height:1.3;
+    color:var(--navy-900);
+  }
+  .brand-name span{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:11px;
+    color:var(--ink-soft);
+    letter-spacing:.4px;
+    margin-top:2px;
+  }
+
+  .form-head{ margin-bottom:24px; }
+  .form-head h1{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:25px;
+    margin:0 0 6px;
+    color:var(--navy-900);
+  }
+  .form-head p{
+    margin:0;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+
+  .field{
+    margin-bottom:17px;
+    opacity:0;
+    animation:riseIn .5s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .field:nth-of-type(1){animation-delay:.12s;}
+  .field:nth-of-type(2){animation-delay:.18s;}
+
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--navy-900);
+    margin-bottom:7px;
+  }
+  .input-shell{
+    display:flex;
+    align-items:center;
+    border:1.3px solid var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+    padding:0 12px;
+    transition:border-color .18s ease, box-shadow .18s ease;
+  }
+  .input-shell:focus-within{
+    border-color:var(--navy-700);
+    box-shadow:0 0 0 3px rgba(38,56,94,0.1);
+  }
+  .input-shell svg{flex-shrink:0; opacity:.55;}
+  .input-shell input{
+    border:none;
+    outline:none;
+    font-family:inherit;
+    font-size:14.5px;
+    padding:11px 10px 11px 8px;
+    width:100%;
+    color:var(--ink);
+    background:transparent;
+  }
+  .input-shell input::placeholder{color:#A6ABB5;}
+  .domain-tag{
+    flex-shrink:0;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    padding:4px 8px;
+    background:var(--paper-2);
+    border-radius:6px;
+    margin-left:4px;
+  }
+  .field-hint{ font-size:12px; color:var(--ink-soft); margin-top:6px; }
+
+  .row-between{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:2px 0 22px;
+  }
+  .checkline{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); }
+  .checkline input{width:14px;height:14px;accent-color:var(--navy-700);}
+  .link{ font-size:13px; color:var(--navy-700); text-decoration:none; font-weight:500; }
+  .link:hover{text-decoration:underline;}
+
+  .btn-primary{
+    width:100%;
+    background:var(--navy-800);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius);
+    padding:13px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:500;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .15s ease, transform .1s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-primary:hover{background:var(--navy-700);}
+  .btn-primary:active{transform:scale(.98);}
+  .btn-primary .arrow{transition:transform .2s ease;}
+  .btn-primary:hover .arrow{transform:translateX(3px);}
+
+  .btn-ghost{
+    width:100%;
+    background:transparent;
+    color:var(--navy-700);
+    border:1.3px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+  }
+  .btn-ghost:hover{ background:var(--paper-2); border-color:var(--navy-600); }
+
+  .status-note{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin-top:22px;
+    padding:11px 13px;
+    background:var(--gold-100);
+    border-radius:var(--radius);
+    font-size:12.5px;
+    color:#6B5610;
+    line-height:1.55;
+  }
+  .status-note.green{ background:var(--green-100); color:#1E5C39; }
+  .status-note svg{flex-shrink:0;margin-top:1px;}
+
+  .footnote{ margin-top:26px; font-size:12px; color:var(--ink-soft); text-align:center; }
+
+  .role-preview{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--paper-2);
+    border-radius:var(--radius);
+    padding:11px 13px;
+    margin-bottom:20px;
+    font-size:13px;
+  }
+  .role-preview .dot{ width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  .role-preview b{ color:var(--navy-900); }
+
+  .request-box{
+    border:1.3px dashed var(--line);
+    border-radius:var(--radius);
+    padding:14px 15px;
+    margin-top:6px;
+    margin-bottom:20px;
+  }
+  .request-box p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 10px; line-height:1.6; }
+  .request-box textarea{
+    width:100%;
+    border:1.3px solid var(--line);
+    border-radius:8px;
+    font-family:inherit;
+    font-size:13.5px;
+    padding:9px 11px;
+    resize:vertical;
+    min-height:56px;
+    margin-bottom:10px;
+    outline:none;
+  }
+  .request-box textarea:focus{ border-color:var(--navy-700); }
+  .pending-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    font-weight:500;
+    color:#8A6D0B;
+    background:var(--gold-100);
+    padding:4px 10px;
+    border-radius:20px;
+  }
+
+  .hidden{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    .card,.field{animation:none; opacity:1;}
+    .brand-mark::after{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand-mini">
+    <div class="brand-mark">มบ</div>
+    <div class="brand-name">
+      ระบบเช็คชื่อกิจกรรมนักศึกษา
+      <span>UBU ATTENDANCE &amp; CHECK-IN SYSTEM</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: LOGIN -->
+  <div id="step-login">
+    <div class="form-head">
+      <h1>เข้าสู่ระบบ</h1>
+      <p>เข้าสู่ระบบด้วยอีเมลสถาบัน @ubu.ac.th ระบบจะกำหนดสิทธิ์การใช้งานให้อัตโนมัติ</p>
+    </div>
+
+    <div class="field">
+      <label for="email">อีเมลสถาบัน</label>
+      <div class="input-shell">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="1.8"><path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/></svg>
+        <input type="text" id="email" placeholder="6xxxxxxxx หรือ ชื่อ.นามสกุล">
+        <span class="domain-tag">@ubu.ac.th</span>
+      </div>
+      <div class="field-hint">ใช้บัญชี Google Workspace ของมหาวิทยาลัยเท่านั้น</div>
+    </div>
+
+    <div class="field">
+      <label for="pass">รหัสผ่าน</label>
+      <div class="input-shell">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+        <input type="password" id="pass" placeholder="••••••••">
+      </div>
+    </div>
+
+    <div class="row-between">
+      <label class="checkline"><input type="checkbox">จดจำฉันไว้</label>
+      <a href="#" class="link">ลืมรหัสผ่าน?</a>
+    </div>
+
+    <button class="btn-primary" id="login-btn">
+      เข้าสู่ระบบ
+      <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+
+    <div class="status-note">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A6D0B" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span>ระบบอนุญาตเฉพาะบัญชีอีเมลของมหาวิทยาลัยอุบลราชธานี (@ubu.ac.th) เท่านั้น บทบาทของท่าน (ผู้เข้าร่วม / ผู้จัดกิจกรรม / ผู้ดูแลระบบ) จะถูกกำหนดโดยอัตโนมัติตามข้อมูลบัญชี</span>
+    </div>
+
+    <p class="footnote">พบปัญหาการเข้าสู่ระบบ? ติดต่อเจ้าหน้าที่ทะเบียน คณะ/สำนักงาน</p>
+  </div>
+
+  <!-- STEP 2: ROLE CONFIRMED (shown right after login, before redirect) -->
+  <div id="step-role" class="hidden">
+    <div class="form-head">
+      <h1>ยืนยันตัวตนสำเร็จ</h1>
+      <p>ระบบตรวจพบบัญชีของท่านและกำหนดสิทธิ์การใช้งานดังนี้</p>
+    </div>
+
+    <div class="role-preview" id="role-preview-box">
+      <span class="dot"></span>
+      <span>สิทธิ์การใช้งานของท่าน: <b id="role-preview-text">ผู้เข้าร่วมกิจกรรม</b></span>
+    </div>
+
+    <!-- shown only for students who are not yet organizers -->
+    <div id="request-organizer" class="hidden">
+      <div class="request-box">
+        <p>หากท่านต้องการจัดกิจกรรมด้วยตนเอง (สร้างกิจกรรม ออก QR เช็คชื่อ ดูรายงาน) สามารถส่งคำขอสิทธิ์ "ผู้จัดกิจกรรม" ให้ผู้ดูแลระบบพิจารณาได้</p>
+        <div id="request-form-area">
+          <textarea id="request-reason" placeholder="เหตุผลการขอสิทธิ์ เช่น เป็นประธานชมรม / ผู้รับผิดชอบโครงการ..."></textarea>
+          <button class="btn-ghost" id="send-request-btn">ส่งคำขอสิทธิ์ผู้จัดกิจกรรม</button>
+        </div>
+        <div id="request-pending-area" class="hidden">
+          <span class="pending-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A6D0B" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            คำขอของท่านอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="continue-btn">
+      ไปยังหน้าหลัก
+      <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  // If already logged in, skip straight to the right page
+  (function checkExistingSession() {
+    try {
+      const raw = localStorage.getItem("ubu_session");
+      if (!raw) return;
+      const session = JSON.parse(raw);
+      const targetMap = { admin: "Admin.html", organizer: "Staff.html", participant: "Student.html" };
+      const target = targetMap[session.role];
+      if (target) window.location.href = target;
+    } catch (e) {
+      localStorage.removeItem("ubu_session");
+    }
+  })();
+
+  // Demo account map — in production this comes from the school directory / backend.
+  // teacher accounts are auto-granted organizer rights; student accounts default to participant.
+  const ACCOUNT_DIRECTORY = {
+    "somchai.w": { name: "อ.สมชาย วงศ์ธรรม", accountType: "teacher" },
+    "wipa.s":    { name: "อ.วิภา สุขสันต์",   accountType: "teacher" },
+    "admin":     { name: "ผู้ดูแลระบบ",        accountType: "admin" }
+  };
+
+  function resolveAccount(emailPrefix) {
+    if (ACCOUNT_DIRECTORY[emailPrefix]) return ACCOUNT_DIRECTORY[emailPrefix];
+    // numeric-looking prefixes (student ID format) default to student
+    if (/^\d/.test(emailPrefix)) {
+      return { name: "นักศึกษา " + emailPrefix, accountType: "student" };
+    }
+    return { name: emailPrefix, accountType: "student" };
+  }
+
+  function roleLabel(accountType, isApprovedOrganizer) {
+    if (accountType === "admin") return "ผู้ดูแลระบบ";
+    if (accountType === "teacher") return "ผู้จัดกิจกรรม (อาจารย์)";
+    if (accountType === "student" && isApprovedOrganizer) return "ผู้จัดกิจกรรม (นักศึกษาที่ได้รับสิทธิ์)";
+    return "ผู้เข้าร่วมกิจกรรม";
+  }
+
+  document.getElementById("login-btn").addEventListener("click", () => {
+    const emailPrefix = document.getElementById("email").value.trim() || "6520123456";
+    const account = resolveAccount(emailPrefix);
+
+    // demo defaults: assume not yet approved organizer, no pending request
+    const isApprovedOrganizer = false;
+    const hasPendingRequest = false;
+
+    // remember for the continue-btn redirect below
+    currentAccount = account;
+    currentIsApprovedOrganizer = isApprovedOrganizer;
+
+    document.getElementById("step-login").classList.add("hidden");
+    document.getElementById("step-role").classList.remove("hidden");
+
+    const label = roleLabel(account.accountType, isApprovedOrganizer);
+    document.getElementById("role-preview-text").textContent = label;
+
+    const reqBox = document.getElementById("request-organizer");
+    if (account.accountType === "student" && !isApprovedOrganizer) {
+      reqBox.classList.remove("hidden");
+      if (hasPendingRequest) {
+        document.getElementById("request-form-area").classList.add("hidden");
+        document.getElementById("request-pending-area").classList.remove("hidden");
+      }
+    } else {
+      reqBox.classList.add("hidden");
+    }
+  });
+
+  document.getElementById("send-request-btn").addEventListener("click", () => {
+    const reason = document.getElementById("request-reason").value.trim();
+    if (!reason) {
+      alert("กรุณากรอกเหตุผลการขอสิทธิ์");
+      return;
+    }
+    // In production: POST to backend / admin approval queue
+    document.getElementById("request-form-area").classList.add("hidden");
+    document.getElementById("request-pending-area").classList.remove("hidden");
+  });
+
+  let currentAccount = null;
+  let currentIsApprovedOrganizer = false;
+
+  document.getElementById("continue-btn").addEventListener("click", () => {
+    if (!currentAccount) return;
+    const { accountType, name } = currentAccount;
+
+    let role = "participant";
+    let target = "Student.html";
+    if (accountType === "admin") {
+      role = "admin";
+      target = "Admin.html";
+    } else if (accountType === "teacher" || (accountType === "student" && currentIsApprovedOrganizer)) {
+      role = "organizer";
+      target = "Staff.html";
+    }
+
+    // Save session so every other page in the system knows who is logged in
+    const session = {
+      name: name,
+      accountType: accountType,
+      role: role,
+      isApprovedOrganizer: currentIsApprovedOrganizer,
+      loggedInAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem("ubu_session", JSON.stringify(session));
+    } catch (e) {
+      console.error("ไม่สามารถบันทึก session ได้", e);
+    }
+
+    window.location.href = target;
+  });
+</script>
+
+</body>
+</html>

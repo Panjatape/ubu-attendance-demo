@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>หน้าหลัก | UBU Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --amber:#B3792E;
+    --amber-100:#F6EBDA;
+    --red:#B3432E;
+    --red-100:#F7E7E3;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  /* TOP NAVBAR */
+  .navbar{
+    background:var(--navy-900);
+    color:#fff;
+    padding:0 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:64px;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .nav-left{display:flex; align-items:center; gap:36px;}
+  .nav-brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;}
+  .brand-mark{
+    width:32px;height:32px;
+    border:1.5px solid var(--gold-500);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--gold-500);
+    flex-shrink:0;
+  }
+  .nav-brand-name{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:14px;
+    line-height:1.2;
+  }
+  .nav-brand-name span{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:9.5px;
+    color:#8A93A8;
+    letter-spacing:.4px;
+  }
+  .nav-links{display:flex; gap:6px;}
+  .nav-links a{
+    display:flex; align-items:center; gap:7px;
+    padding:8px 14px;
+    border-radius:8px;
+    color:#B7BFCE;
+    font-size:13.5px;
+    font-weight:500;
+    text-decoration:none;
+  }
+  .nav-links a.active{background:var(--navy-700); color:#fff;}
+  .nav-links a.active svg{stroke:var(--gold-500);}
+  .nav-links a svg{flex-shrink:0;}
+
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .nav-avatar{
+    width:32px;height:32px;
+    border-radius:50%;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    font-size:12px;
+    font-family:'Noto Serif Thai',serif;
+    flex-shrink:0;
+    text-decoration:none;
+  }
+
+  .mobile-toggle{display:none;}
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .mobile-toggle{
+      display:flex; align-items:center; justify-content:center;
+      width:34px;height:34px;
+      background:rgba(255,255,255,0.08);
+      border-radius:8px;
+      cursor:pointer;
+    }
+  }
+
+  /* PAGE HEADER */
+  .page-header{
+    background:var(--navy-800);
+    color:#fff;
+    padding:36px 32px 28px;
+  }
+  .page-header-inner{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .page-header .greeting{
+    font-size:13px;
+    color:#9AA6BC;
+    margin-bottom:6px;
+  }
+  .page-header h1{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 6px;
+  }
+  .page-header p{
+    margin:0 0 22px;
+    font-size:13.5px;
+    color:#9AA6BC;
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    max-width:520px;
+  }
+  .stat-chip{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .stat-chip .num{font-family:'Noto Serif Thai',serif; font-weight:600; font-size:24px; line-height:1;}
+  .stat-chip .lbl{font-size:11px; color:#AAB4C5; margin-top:6px;}
+  .stat-chip.gold .num{color:var(--gold-500);}
+  .stat-chip.red .num{color:#E8897B;}
+
+  /* CONTENT */
+  .content{
+    max-width:1100px;
+    margin:0 auto;
+    padding:28px 32px 70px;
+  }
+
+  /* SCAN CTA CARD */
+  .scan-cta{
+    background:linear-gradient(135deg, var(--navy-800), var(--navy-700));
+    border-radius:var(--radius);
+    padding:28px 30px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    color:#fff;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+  .scan-cta-text h2{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 6px;
+  }
+  .scan-cta-text p{
+    margin:0;
+    font-size:13px;
+    color:#B7BFCE;
+    max-width:360px;
+    line-height:1.6;
+  }
+  .scan-cta-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    border:none;
+    border-radius:12px;
+    padding:14px 26px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    text-decoration:none;
+    flex-shrink:0;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .scan-cta-btn:hover{background:#DCB640;}
+  .scan-cta-btn:active{transform:scale(.98);}
+
+  /* SECTION HEADS */
+  .section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .section-head h3{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:16.5px;
+    margin:0;
+    color:var(--navy-900);
+  }
+  .section-head a{
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--navy-700);
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .section-head a:hover{text-decoration:underline;}
+
+  /* UPCOMING EVENTS */
+  .events-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:14px;
+    margin-bottom:32px;
+  }
+  .event-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 17px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .event-type-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:11px;
+    font-weight:500;
+    padding:3px 10px;
+    border-radius:20px;
+    background:var(--paper-2);
+    color:var(--navy-700);
+    width:fit-content;
+  }
+  .event-card .e-title{
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--navy-900);
+    line-height:1.4;
+  }
+  .event-card .e-meta{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .event-card .e-meta span{ display:flex; align-items:center; gap:6px; }
+  .event-card .e-meta svg{ flex-shrink:0; opacity:.7; }
+  .event-card .geo-note{
+    font-size:11px;
+    color:var(--amber);
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .event-card .e-actions{
+    margin-top:auto;
+    padding-top:6px;
+  }
+  .event-card .e-actions a{
+    display:block;
+    text-align:center;
+    background:var(--navy-800);
+    color:#fff;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:500;
+    padding:9px;
+    border-radius:8px;
+  }
+  .event-card .e-actions a:hover{ background:var(--navy-700); }
+
+  .empty-events{
+    grid-column:1 / -1;
+    text-align:center;
+    padding:30px 20px;
+    color:var(--ink-soft);
+    font-size:13px;
+    background:#fff;
+    border:1px dashed var(--line);
+    border-radius:12px;
+  }
+
+  /* RECENT HISTORY SUMMARY */
+  .history-mini{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .history-mini-row{
+    display:grid;
+    grid-template-columns:36px 1fr auto auto;
+    align-items:center;
+    gap:14px;
+    padding:13px 18px;
+    border-top:1px solid var(--paper-2);
+  }
+  .history-mini-row:first-child{border-top:none;}
+  .h-icon{
+    width:30px;height:30px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .h-icon.ontime{background:var(--green-100);}
+  .h-icon.late{background:var(--amber-100);}
+  .h-icon.absent{background:var(--red-100);}
+  .h-name{font-size:13.5px; font-weight:500; color:var(--ink);}
+  .h-meta{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .h-date{
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:right;
+    white-space:nowrap;
+  }
+  .status-pill{
+    font-size:11px;
+    font-weight:500;
+    padding:3px 10px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .status-pill.ontime{background:var(--green-100); color:#1E5C39;}
+  .status-pill.late{background:var(--amber-100); color:#8A5D22;}
+  .status-pill.absent{background:var(--red-100); color:#7A2E1E;}
+
+  @media (max-width:560px){
+    .history-mini-row{grid-template-columns:30px 1fr; row-gap:4px;}
+    .h-date, .status-pill{grid-column:2; justify-self:start;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a class="nav-brand" href="Student.html">
+      <div class="brand-mark">มบ</div>
+      <div class="nav-brand-name">ระบบเช็คชื่อกิจกรรม<span>UBU ATTENDANCE</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="Student.html" class="active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        หน้าหลัก
+      </a>
+      <a href="History.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+        ประวัติ
+      </a>
+      <a href="Scan.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        สแกน QR
+      </a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="mobile-toggle">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </div>
+    <a href="#" id="logout-link" title="ออกจากระบบ" style="display:flex; align-items:center; gap:5px; color:#B7BFCE; font-size:12.5px; text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      ออกจากระบบ
+    </a>
+    <a class="nav-avatar" href="#" title="โปรไฟล์" id="nav-avatar">ณช</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="greeting" id="greeting-text">สวัสดี, ณัฐชนก 👋</div>
+    <h1>ยินดีต้อนรับกลับมา</h1>
+    <p>ตรวจสอบกิจกรรมที่กำลังจะถึงและสแกน QR เพื่อเช็คชื่อได้จากที่นี่</p>
+
+    <div class="stat-row">
+      <div class="stat-chip gold"><div class="num">24</div><div class="lbl">เข้าร่วมทั้งหมด</div></div>
+      <div class="stat-chip"><div class="num">89%</div><div class="lbl">อัตราเข้าร่วม</div></div>
+      <div class="stat-chip red"><div class="num">3</div><div class="lbl">ไม่ได้เข้าร่วม</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="scan-cta">
+    <div class="scan-cta-text">
+      <h2>พร้อมเช็คชื่อกิจกรรมหรือยัง?</h2>
+      <p>สแกน QR Code ที่หน้างานเพื่อเช็คชื่อเข้าร่วมกิจกรรม ระบบจะตรวจสอบตำแหน่งของท่านโดยอัตโนมัติ</p>
+    </div>
+    <a class="scan-cta-btn" href="Scan.html">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#132038" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
+      สแกน QR เช็คชื่อ
+    </a>
+  </div>
+
+  <div class="section-head">
+    <h3>กิจกรรมใกล้ตัว</h3>
+    <a href="#">ดูทั้งหมด
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  </div>
+  <div class="events-row" id="eventsRow">
+    <div class="empty-events" id="eventsEmpty" style="display:none;">
+      ยังไม่มีกิจกรรมที่เปิดให้เช็คชื่อในขณะนี้
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h3>ประวัติล่าสุด</h3>
+    <a href="History.html">ดูประวัติทั้งหมด
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  </div>
+  <div class="history-mini">
+    <div class="history-mini-row">
+      <div class="h-icon ontime"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <div>
+        <div class="h-name">ค่ายอาสาพัฒนาชุมชน</div>
+        <div class="h-meta">ลานกิจกรรม คณะ · ชมรมอาสา</div>
+      </div>
+      <span class="status-pill ontime">เข้าร่วมแล้ว</span>
+      <div class="h-date">17 ก.ค. 2569</div>
+    </div>
+    <div class="history-mini-row">
+      <div class="h-icon absent"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7A2E1E" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div>
+        <div class="h-name">เสวนาแนะแนวอาชีพ</div>
+        <div class="h-meta">ห้อง Auditorium · ฝ่ายแนะแนว</div>
+      </div>
+      <span class="status-pill absent">ไม่ได้เข้าร่วม</span>
+      <div class="h-date">16 ก.ค. 2569</div>
+    </div>
+    <div class="history-mini-row">
+      <div class="h-icon late"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A5D22" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg></div>
+      <div>
+        <div class="h-name">อบรมทักษะดิจิทัลเบื้องต้น</div>
+        <div class="h-meta">ห้องประชุม IT-205 · สำนักคอมพิวเตอร์</div>
+      </div>
+      <span class="status-pill late">มาสาย</span>
+      <div class="h-date">14 ก.ค. 2569</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Session guard: this page is for participants only.
+  // If not logged in, or logged in as a different role, send back to the correct place.
+  (function enforceSession() {
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
+
+    if (!session) {
+      window.location.href = "index.html";
+      return;
+    }
+    const roleTargets = { admin: "Admin.html", organizer: "Staff.html", participant: "Student.html" };
+    if (session.role !== "participant" && roleTargets[session.role]) {
+      window.location.href = roleTargets[session.role];
+      return;
+    }
+
+    // Fill in the real logged-in name
+    const initials = session.name.replace(/^(อ\.|นักศึกษา\s?)/, "").trim().slice(0, 2);
+    const avatarEl = document.getElementById("nav-avatar");
+    const greetingEl = document.getElementById("greeting-text");
+    if (avatarEl) avatarEl.textContent = initials || "?";
+    if (greetingEl) greetingEl.textContent = "สวัสดี, " + session.name + " 👋";
+  })();
+
+  document.getElementById("logout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  function fmtEventDate(d) {
+    if (!d) return "";
+    try {
+      return new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) { return d; }
+  }
+
+  function renderEventCard(ev) {
+    const geoNote = ev.geoLat
+      ? `<div class="geo-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ต้องอยู่ในพื้นที่รัศมี ${escapeHtml(ev.geoRadius)} ม. จึงเช็คชื่อได้
+        </div>`
+      : "";
+    return `
+      <div class="event-card">
+        <span class="event-type-badge">${escapeHtml(ev.type || "ไม่ระบุประเภท")}</span>
+        <div class="e-title">${escapeHtml(ev.title || "(ไม่มีชื่อ)")}</div>
+        <div class="e-meta">
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+            ${escapeHtml(fmtEventDate(ev.date)) || "ไม่ระบุวันที่"}
+          </span>
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${escapeHtml(ev.host) || "ไม่ระบุผู้จัด"}
+          </span>
+        </div>
+        ${geoNote}
+        <div class="e-actions"><a href="Scan.html?event=${encodeURIComponent(ev.id)}">สแกนเช็คชื่อ</a></div>
+      </div>
+    `;
+  }
+
+  async function loadUpcomingEvents() {
+    const container = document.getElementById("eventsRow");
+    const emptyEl = document.getElementById("eventsEmpty");
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+
+      // Show upcoming events (today or later), soonest first; fall back to all events if none are upcoming
+      const today = new Date().toISOString().slice(0, 10);
+      let upcoming = events.filter(e => e.date && e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+      if (upcoming.length === 0) upcoming = events.slice(0, 3);
+
+      if (upcoming.length === 0) {
+        emptyEl.style.display = "";
+        return;
+      }
+      emptyEl.style.display = "none";
+      container.innerHTML = upcoming.slice(0, 6).map(renderEventCard).join("") + emptyEl.outerHTML;
+    } catch (e) {
+      console.error("โหลดกิจกรรมไม่สำเร็จ", e);
+      emptyEl.style.display = "";
+    }
+  }
+  loadUpcomingEvents();
+</script>
+
+</body>
+</html>

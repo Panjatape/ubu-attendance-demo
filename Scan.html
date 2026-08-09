@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan QR &amp; Check-in | UBU Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --red:#B3432E;
+    --red-100:#F7E7E3;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+
+  .switcher{
+    display:flex;
+    gap:6px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width:420px;
+  }
+  .switcher button{
+    border:none;
+    background:transparent;
+    font-family:inherit;
+    font-size:11.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    padding:7px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .switcher button.active{
+    background:var(--navy-800);
+    color:#fff;
+  }
+
+  /* PHONE FRAME */
+  .phone{
+    width:340px;
+    max-width:100%;
+    height:660px;
+    background:var(--navy-900);
+    border-radius:34px;
+    padding:10px;
+    box-shadow:0 20px 50px rgba(19,32,56,0.28);
+    position:relative;
+  }
+  .screen{
+    width:100%;
+    height:100%;
+    background:var(--navy-900);
+    border-radius:26px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    color:#fff;
+  }
+  .notch{
+    position:absolute;
+    top:8px;left:50%;
+    transform:translateX(-50%);
+    width:90px;height:22px;
+    background:var(--navy-900);
+    border-radius:12px;
+    z-index:20;
+  }
+
+  .topbar{
+    padding:38px 20px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    z-index:10;
+    position:relative;
+  }
+  .topbar h2{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:16px;
+    margin:0;
+  }
+  .topbar .sub{
+    font-size:11px;
+    color:#9AA6BC;
+    margin-top:2px;
+  }
+  .close-btn{
+    width:30px;height:30px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+
+  .view{
+    flex:1;
+    display:none;
+    flex-direction:column;
+    padding:0 20px 20px;
+  }
+  .view.active{display:flex;}
+
+  /* ---------- SCAN VIEW ---------- */
+  .cam-wrap{
+    flex:1;
+    background:#0B1526;
+    border-radius:20px;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:16px;
+  }
+  .cam-noise{
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,0.05), transparent 40%),
+      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.04), transparent 40%);
+  }
+  .viewfinder{
+    width:190px;height:190px;
+    position:relative;
+  }
+  .corner{
+    position:absolute;
+    width:26px;height:26px;
+    border:2.5px solid var(--gold-500);
+  }
+  .corner.tl{top:0;left:0;border-right:none;border-bottom:none;border-radius:8px 0 0 0;}
+  .corner.tr{top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0;}
+  .corner.bl{bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px;}
+  .corner.br{bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0;}
+  .laser{
+    position:absolute;
+    left:6px;right:6px;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--gold-500), transparent);
+    top:8px;
+    animation:sweep 2s ease-in-out infinite;
+    box-shadow:0 0 8px 1px rgba(201,162,39,0.6);
+  }
+  @keyframes sweep{
+    0%,100%{top:8px;}
+    50%{top:178px;}
+  }
+  .cam-hint{
+    position:absolute;
+    bottom:14px;left:0;right:0;
+    text-align:center;
+    font-size:12.5px;
+    color:#C7CEDB;
+  }
+  .scan-action{
+    text-align:center;
+  }
+  .scan-action p{
+    font-size:12.5px;
+    color:#9AA6BC;
+    margin:0 0 14px;
+    line-height:1.6;
+  }
+  .btn-gold{
+    width:100%;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    font-family:inherit;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+
+  /* ---------- VERIFYING VIEW ---------- */
+  .verify-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .radar{
+    position:relative;
+    width:180px;height:180px;
+    margin-bottom:28px;
+  }
+  .ring{
+    position:absolute;
+    border:1px solid rgba(201,162,39,0.3);
+    border-radius:50%;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+  }
+  .ring.r1{width:180px;height:180px; animation:pulse 2.2s ease-out infinite;}
+  .ring.r2{width:120px;height:120px; animation:pulse 2.2s ease-out infinite .5s;}
+  .ring.r3{width:60px;height:60px; border-color:rgba(201,162,39,0.5);}
+  @keyframes pulse{
+    0%{opacity:.9; transform:translate(-50%,-50%) scale(0.55);}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(1);}
+  }
+  .pin-dot{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:14px;height:14px;
+    background:var(--gold-500);
+    border-radius:50%;
+    box-shadow:0 0 0 5px rgba(201,162,39,0.22);
+  }
+  .verify-title{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:18px;
+    margin:0 0 8px;
+  }
+  .verify-sub{
+    font-size:13px;
+    color:#9AA6BC;
+    line-height:1.6;
+    max-width:230px;
+  }
+  .verify-steps{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:26px;
+    width:100%;
+    max-width:230px;
+    text-align:left;
+  }
+  .vstep{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:12.5px;
+    color:#9AA6BC;
+  }
+  .vstep .dot{
+    width:16px;height:16px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.08);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .vstep.done{color:#D7DBE4;}
+  .vstep.done .dot{background:var(--green);}
+
+  /* ---------- SUCCESS VIEW ---------- */
+  .result-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .result-icon{
+    width:74px;height:74px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:20px;
+    animation:pop .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop{
+    0%{transform:scale(0.6); opacity:0;}
+    100%{transform:scale(1); opacity:1;}
+  }
+  .result-icon.ok{background:var(--green);}
+  .result-icon.fail{background:var(--red);}
+  .result-title{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 6px;
+  }
+  .result-sub{
+    font-size:13px;
+    color:#9AA6BC;
+    margin-bottom:24px;
+  }
+  .result-card{
+    width:100%;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px;
+    padding:16px 18px;
+    text-align:left;
+  }
+  .rc-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    font-size:12.5px;
+  }
+  .rc-row:last-child{border-bottom:none;}
+  .rc-row .k{color:#9AA6BC;}
+  .rc-row .v{color:#fff;font-weight:500;}
+  .badge-ontime{
+    background:var(--green-100);
+    color:#1E5C39;
+    font-size:11px;
+    font-weight:500;
+    padding:2px 9px;
+    border-radius:999px;
+  }
+  .result-actions{
+    width:100%;
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .btn-outline-light{
+    width:100%;
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.2);
+    color:#fff;
+    border-radius:12px;
+    padding:12px;
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:500;
+    cursor:pointer;
+  }
+
+  /* FAIL specific */
+  .fail-reason{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    background:var(--red-100);
+    color:#7A2E1E;
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:12px;
+    line-height:1.55;
+    text-align:left;
+    margin-bottom:18px;
+  }
+  .fail-reason svg{flex-shrink:0;margin-top:1px;}
+  .distance-tag{
+    font-size:12.5px;
+    color:#9AA6BC;
+    margin-bottom:20px;
+  }
+  .distance-tag b{color:#fff;}
+  .fallback-box{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:14px;
+    text-align:left;
+  }
+  .fallback-hint{ font-size:12px; color:#9AA6BC; margin:0 0 10px; line-height:1.6; }
+  .fallback-box .btn-outline-light{ margin-bottom:8px; }
+  .fallback-box .btn-outline-light:last-child{ margin-bottom:0; }
+  .manual-code-input{
+    width:100%;
+    background:rgba(255,255,255,0.06);
+    border:1.3px solid rgba(255,255,255,0.15);
+    border-radius:10px;
+    color:#fff;
+    font-family:inherit;
+    font-size:16px;
+    letter-spacing:3px;
+    text-align:center;
+    padding:12px;
+    margin-bottom:8px;
+    outline:none;
+  }
+  .manual-code-input:focus{ border-color:var(--gold-500); }
+  .manual-code-error{
+    color:#F0A897;
+    font-size:12px;
+    text-align:center;
+    margin:-2px 0 10px;
+    display:none;
+  }
+  .manual-code-error.show{ display:block; }
+  .pending-tag-dark{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    font-weight:500;
+    color:var(--gold-500);
+    background:rgba(201,162,39,0.12);
+    padding:6px 12px;
+    border-radius:20px;
+  }
+  .block-box{
+    width:100%;
+    background:rgba(179,67,46,0.12);
+    border:1px solid rgba(179,67,46,0.35);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:14px;
+    text-align:left;
+  }
+  .block-box p{ font-size:12.5px; color:#F0A897; margin:0; line-height:1.6; }
+  .checkout-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--navy-900);
+    background:var(--gold-500);
+    padding:4px 10px;
+    border-radius:20px;
+    margin-bottom:10px;
+  }
+
+  /* ---------- SURVEY VIEW ---------- */
+  .survey-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    padding-right:2px;
+  }
+  .survey-body::-webkit-scrollbar{ width:4px; }
+  .survey-body::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.15); border-radius:10px; }
+  .survey-head{ text-align:center; margin-bottom:18px; padding-top:6px; }
+  .survey-head h3{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:17px;
+    margin:0 0 6px;
+  }
+  .survey-head p{ font-size:12.5px; color:#9AA6BC; margin:0; line-height:1.55; }
+
+  .survey-q{ margin-bottom:20px; }
+  .survey-q label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:#fff;
+    margin-bottom:10px;
+  }
+  .star-row{ display:flex; gap:8px; justify-content:center; }
+  .star-btn{
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:2px;
+    line-height:0;
+  }
+  .star-btn svg{ width:32px; height:32px; transition:transform .1s ease; }
+  .star-btn:active svg{ transform:scale(0.85); }
+  .star-btn svg .star-fill{ fill:rgba(255,255,255,0.12); stroke:rgba(255,255,255,0.3); stroke-width:1.5; transition:fill .15s ease, stroke .15s ease; }
+  .star-btn.selected svg .star-fill{ fill:var(--gold-500); stroke:var(--gold-500); }
+  .star-label{ text-align:center; font-size:12px; color:var(--gold-500); font-weight:500; margin-top:8px; min-height:16px; }
+
+  .survey-textarea{
+    width:100%;
+    min-height:74px;
+    background:rgba(255,255,255,0.06);
+    border:1.3px solid rgba(255,255,255,0.15);
+    border-radius:10px;
+    color:#fff;
+    font-family:inherit;
+    font-size:13px;
+    padding:10px 12px;
+    resize:vertical;
+    outline:none;
+  }
+  .survey-textarea::placeholder{ color:#6E7893; }
+  .survey-textarea:focus{ border-color:var(--gold-500); }
+
+  .survey-count-note{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,0.06);
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:12px;
+    color:#9AA6BC;
+    margin-bottom:20px;
+  }
+  .survey-count-note b{ color:#fff; font-family:'JetBrains Mono',monospace; }
+
+  .survey-error{
+    color:#F0A897;
+    font-size:12px;
+    text-align:center;
+    margin:-8px 0 12px;
+    display:none;
+  }
+  .survey-error.show{ display:block; }
+
+  .survey-thanks{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+
+  .back-link{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    text-decoration:none;
+  }
+  .back-link:hover{color:var(--navy-800);}
+  .top-bar-row{
+    width:100%;
+    max-width:420px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .logout-link{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    text-decoration:none;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    padding:0;
+  }
+  .logout-link:hover{color:var(--red);}
+</style>
+</head>
+<body>
+
+<div class="top-bar-row">
+  <a class="back-link" href="Student.html">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    กลับหน้าหลัก
+  </a>
+  <button type="button" class="logout-link" id="logout-link">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    ออกจากระบบ
+  </button>
+</div>
+
+<div class="switcher" id="switcher">
+  <button data-view="scan" class="active">1. สแกน QR</button>
+  <button data-view="verify">2. ยืนยันตำแหน่ง</button>
+  <button data-view="success">3a. สำเร็จ</button>
+  <button data-view="fail">3b. อยู่นอกพื้นที่</button>
+  <button data-view="survey">4. แบบประเมิน</button>
+</div>
+
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+
+    <div class="topbar">
+      <div>
+        <h2 id="topTitle">สแกน QR เช็คชื่อ</h2>
+        <div class="sub" id="topSub">วิชา การเขียนโปรแกรมเว็บ · Sec 1</div>
+      </div>
+      <div class="close-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </div>
+    </div>
+
+    <!-- 1. SCAN -->
+    <div class="view active" id="view-scan">
+      <div class="cam-wrap">
+        <div class="cam-noise"></div>
+        <div class="viewfinder">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+          <div class="laser"></div>
+        </div>
+        <div class="cam-hint">จัดกรอบให้ตรง QR Code หน้าห้องเรียน</div>
+      </div>
+      <div class="scan-action">
+        <p id="scanActionHint">ระบบจะตรวจสอบตำแหน่งของท่านโดยอัตโนมัติ<br>หลังสแกนสำเร็จ</p>
+        <button class="btn-gold" id="simulateScanBtn" data-goto="verify">จำลองการสแกนสำเร็จ →</button>
+      </div>
+    </div>
+
+    <!-- 2. VERIFYING -->
+    <div class="view" id="view-verify">
+      <div class="verify-body">
+        <div class="radar">
+          <div class="ring r1"></div>
+          <div class="ring r2"></div>
+          <div class="ring r3"></div>
+          <div class="pin-dot"></div>
+        </div>
+        <h3 class="verify-title">กำลังยืนยันตำแหน่ง</h3>
+        <p class="verify-sub">กรุณาอย่าปิดหน้าจอ ระบบกำลังตรวจสอบว่าท่านอยู่ในพื้นที่ห้องเรียนหรือไม่</p>
+        <div class="verify-steps">
+          <div class="vstep done"><span class="dot"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>อ่านรหัส QR สำเร็จ</div>
+          <div class="vstep done"><span class="dot"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>ยืนยันตัวตนผู้ใช้</div>
+          <div class="vstep"><span class="dot"></span>ตรวจสอบพิกัด GPS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3a. SUCCESS -->
+    <div class="view" id="view-success">
+      <div class="result-body">
+        <div class="result-icon ok">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <span class="checkout-badge" id="checkoutBadge" style="display:none;">✓ สแกนออกสำเร็จ</span>
+        <h3 class="result-title" id="successTitle">เช็คชื่อ (เข้า) สำเร็จ</h3>
+        <p class="result-sub" id="successSub">บันทึกการเข้ากิจกรรมของท่านเรียบร้อยแล้ว</p>
+        <div class="result-card" id="successCard">
+          <div class="rc-row"><span class="k">กิจกรรม</span><span class="v" id="successEventName">-</span></div>
+          <div class="rc-row"><span class="k">เวลาเช็คชื่อเข้า</span><span class="v" id="successCheckinTime">-</span></div>
+          <div class="rc-row" id="successCheckoutRow" style="display:none;"><span class="k">เวลาเช็คชื่อออก</span><span class="v" id="successCheckoutTime">-</span></div>
+          <div class="rc-row" id="successPercentRow" style="display:none;"><span class="k">เวลาที่อยู่จริง</span><span class="v" id="successPercent">-</span></div>
+          <div class="rc-row"><span class="k">สถานะ</span><span class="badge-ontime" id="successStatusBadge">ตรงเวลา</span></div>
+        </div>
+        <div class="result-actions" id="successActionsCheckin">
+          <button class="btn-gold" data-goto="scan" id="goCheckoutBtn">เสร็จสิ้น (รอสแกนออกภายหลัง)</button>
+        </div>
+        <div class="result-actions" id="successActionsCheckout" style="display:none;">
+          <button class="btn-gold" data-goto="survey">ประเมินความพึงพอใจ →</button>
+          <button class="btn-outline-light" data-goto="scan" style="margin-top:8px;">ข้ามไปก่อน</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3b. FAIL -->
+    <div class="view" id="view-fail">
+      <div class="result-body">
+        <div class="result-icon fail">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </div>
+        <h3 class="result-title" id="failTitle">อยู่นอกพื้นที่ที่กำหนด</h3>
+        <p class="result-sub" id="failSub">ไม่สามารถบันทึกการเช็คชื่อได้</p>
+        <div class="fail-reason" id="failReasonBox">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A2E1E" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span id="failReasonText">ตำแหน่งของท่านอยู่นอกรัศมี Geo-fencing ที่อาจารย์กำหนดไว้สำหรับคาบเรียนนี้</span>
+        </div>
+        <div class="distance-tag" id="failDistanceTag">ห่างจากจุดเช็คชื่อประมาณ <b>85 เมตร</b> (รัศมีที่กำหนด <span id="configuredRadius">50</span> เมตร)</div>
+
+        <!-- Fallback options shown depending on failure reason -->
+        <div id="failFallbackBox" class="fallback-box" style="display:none;">
+          <p class="fallback-hint" id="fallbackHint"></p>
+          <button class="btn-outline-light" id="manualCodeBtn" style="display:none;">กรอกรหัสกิจกรรมด้วยตนเอง</button>
+          <button class="btn-outline-light" id="requestExceptionBtn" style="display:none;">ขอเช็คชื่อกรณีพิเศษ (รออาจารย์อนุมัติ)</button>
+        </div>
+
+        <div id="manualCodeForm" class="fallback-box" style="display:none;">
+          <p class="fallback-hint">กรอกรหัสกิจกรรม 6 หลักที่อาจารย์แจ้งหน้าห้อง (ใช้กรณีกล้อง/QR ใช้งานไม่ได้)</p>
+          <input type="text" id="manualCodeInput" maxlength="6" placeholder="เช่น 482913" class="manual-code-input">
+          <div class="manual-code-error" id="manualCodeError">รหัสไม่ถูกต้อง กรุณาลองใหม่</div>
+          <button class="btn-gold" id="submitManualCodeBtn">ยืนยันรหัส</button>
+        </div>
+
+        <div id="exceptionSentBox" class="fallback-box" style="display:none;">
+          <span class="pending-tag-dark">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            ส่งคำขอเช็คชื่อกรณีพิเศษแล้ว รออาจารย์อนุมัติ
+          </span>
+        </div>
+
+        <div class="result-actions" id="failActionsDefault">
+          <button class="btn-gold" data-goto="verify">ลองใหม่อีกครั้ง</button>
+          <button class="btn-outline-light" data-goto="scan">กลับไปหน้าสแกน</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SURVEY -->
+    <div class="view" id="view-survey">
+      <div class="survey-body" id="surveyForm">
+        <div class="survey-head">
+          <h3>ประเมินความพึงพอใจ</h3>
+          <p>ความคิดเห็นของท่านช่วยให้ผู้จัดกิจกรรมพัฒนากิจกรรมครั้งต่อไปให้ดียิ่งขึ้น</p>
+        </div>
+
+        <div class="survey-count-note">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9AA6BC" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <span>นับจำนวนผู้เข้าร่วมแล้ว <b id="surveyAttendCount">-</b> คน (อัตโนมัติจากการเช็คชื่อ)</span>
+        </div>
+
+        <div class="survey-q">
+          <label>ท่านพึงพอใจกับกิจกรรมนี้ระดับใด?</label>
+          <div class="star-row" id="starRow">
+            <button type="button" class="star-btn" data-star="1"><svg viewBox="0 0 24 24"><path class="star-fill" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></button>
+            <button type="button" class="star-btn" data-star="2"><svg viewBox="0 0 24 24"><path class="star-fill" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></button>
+            <button type="button" class="star-btn" data-star="3"><svg viewBox="0 0 24 24"><path class="star-fill" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></button>
+            <button type="button" class="star-btn" data-star="4"><svg viewBox="0 0 24 24"><path class="star-fill" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></button>
+            <button type="button" class="star-btn" data-star="5"><svg viewBox="0 0 24 24"><path class="star-fill" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg></button>
+          </div>
+          <div class="star-label" id="starLabel">&nbsp;</div>
+        </div>
+
+        <div class="survey-q">
+          <label for="surveyComment">ความคิดเห็นทั่วไป (ถ้ามี)</label>
+          <textarea class="survey-textarea" id="surveyComment" placeholder="สิ่งที่ประทับใจ หรือข้อเสนอแนะเพื่อปรับปรุงกิจกรรมครั้งต่อไป..."></textarea>
+        </div>
+
+        <div class="survey-error" id="surveyError">กรุณาให้คะแนนความพึงพอใจก่อนส่งแบบประเมิน</div>
+
+        <div class="result-actions" style="margin-top:4px;">
+          <button class="btn-gold" id="submitSurveyBtn">ส่งแบบประเมิน</button>
+          <button class="btn-outline-light" data-goto="scan">ข้ามการประเมิน</button>
+        </div>
+      </div>
+
+      <div class="survey-thanks" id="surveyThanks" style="display:none;">
+        <div class="result-icon ok">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3 class="result-title">ขอบคุณสำหรับความคิดเห็น</h3>
+        <p class="result-sub">บันทึกแบบประเมินของท่านเรียบร้อยแล้ว</p>
+        <div class="result-actions">
+          <button class="btn-outline-light" data-goto="scan">เสร็จสิ้น</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const views = document.querySelectorAll('.view');
+  const btns = document.querySelectorAll('.switcher button');
+  let currentEventName = 'กิจกรรม';
+  const titleMap = {
+    scan: ['สแกน QR เช็คชื่อ', ''],
+    verify: ['กำลังตรวจสอบ', ''],
+    success: ['เช็คชื่อสำเร็จ', ''],
+    fail: ['เช็คชื่อไม่สำเร็จ', ''],
+    survey: ['แบบประเมินกิจกรรม', '']
+  };
+
+  function goto(name){
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    btns.forEach(b => b.classList.remove('active'));
+    const match = document.querySelector('.switcher button[data-view="' + name + '"]');
+    if(match) match.classList.add('active');
+    document.getElementById('topTitle').textContent = titleMap[name][0];
+    document.getElementById('topSub').textContent = titleMap[name][1] || currentEventName;
+  }
+
+  btns.forEach(b => b.addEventListener('click', () => goto(b.dataset.view)));
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    if (el.id === 'goCheckoutBtn') return; // has its own handler below
+    el.addEventListener('click', () => goto(el.dataset.goto));
+  });
+
+  // ---------- Core state ----------
+  let currentEventId = null;
+  let currentEvent = null;
+  let systemConfig = { requireCheckout: true, minAttendPercent: 80, multiScanEnabled: true, scanCooldownMinutes: 5 };
+  let currentUser = null;
+  let scanStage = "checkin"; // "checkin" | "checkout"
+  let pendingFailReason = null; // "geo" | "camera" | "network"
+
+  function getSessionUser() {
+    try { return JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { return null; }
+  }
+
+  function timesOverlap(aStart, aEnd, bStart, bEnd) {
+    // date-agnostic: compares HH:MM strings, only meaningful when both events are same-day (checked by caller)
+    if (!aStart || !aEnd || !bStart || !bEnd) return false;
+    return aStart < bEnd && bStart < aEnd;
+  }
+
+  async function getAllAttendanceRecords() {
+    try {
+      const res = await window.storage.get("attendance-records", true);
+      return res ? JSON.parse(res.value) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function saveAllAttendanceRecords(records) {
+    try {
+      await window.storage.set("attendance-records", JSON.stringify(records), true);
+      return true;
+    } catch (e) {
+      console.error("บันทึกข้อมูลการเช็คชื่อไม่สำเร็จ", e);
+      return false;
+    }
+  }
+
+  // Load the real event this scan is for, based on ?event=<id> in the URL.
+  async function loadEventFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("event");
+    currentEventId = eventId;
+    currentUser = getSessionUser();
+
+    // Load admin-configured defaults
+    try {
+      const cfgRes = await window.storage.get("system-config", true);
+      if (cfgRes) {
+        const cfg = JSON.parse(cfgRes.value);
+        systemConfig = { ...systemConfig, ...cfg };
+      }
+    } catch (e) {
+      console.error("โหลด system-config ไม่สำเร็จ (จะใช้ค่าเริ่มต้น)", e);
+    }
+
+    if (!eventId) {
+      document.getElementById('topSub').textContent = currentEventName;
+      return;
+    }
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      const ev = events.find(e => e.id === eventId);
+      if (!ev) {
+        document.getElementById('topSub').textContent = currentEventName;
+        return;
+      }
+      currentEvent = ev;
+      currentEventName = ev.title || currentEventName;
+      document.getElementById('topSub').textContent = currentEventName;
+      const radiusEl = document.getElementById('configuredRadius');
+      if (radiusEl && ev.geoRadius) radiusEl.textContent = ev.geoRadius;
+
+      await determineScanStage();
+    } catch (e) {
+      console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
+      document.getElementById('topSub').textContent = currentEventName;
+      pendingFailReason = "network";
+    }
+  }
+
+  // Decide whether this scan should be check-in or check-out, and block if not allowed.
+  async function determineScanStage() {
+    if (!currentEvent || !currentUser) return;
+    const requireCheckout = currentEvent.requireCheckout !== undefined ? currentEvent.requireCheckout : systemConfig.requireCheckout;
+    const records = await getAllAttendanceRecords();
+    const myRecord = records.find(r => r.eventId === currentEventId && r.userEmail === currentUser.name);
+
+    if (myRecord && myRecord.checkInTime && !myRecord.checkOutTime && requireCheckout) {
+      scanStage = "checkout";
+      document.getElementById('scanActionHint').innerHTML = 'ท่านเช็คชื่อ "เข้า" ไปแล้ว<br>สแกนอีกครั้งเพื่อเช็คชื่อ "ออก"';
+      document.getElementById('simulateScanBtn').textContent = "จำลองการสแกนออกสำเร็จ →";
+    } else if (myRecord && myRecord.checkInTime && (!requireCheckout || myRecord.checkOutTime)) {
+      // Already fully checked in (and out, if required) — block duplicate scan
+      scanStage = "blocked-duplicate";
+      showScanBlocked("ท่านเช็คชื่อกิจกรรมนี้ไปแล้ว ระบบไม่รองรับการสแกนซ้ำเกินรอบที่กำหนด");
+    } else {
+      scanStage = "checkin";
+      document.getElementById('scanActionHint').innerHTML = 'ระบบจะตรวจสอบตำแหน่งของท่านโดยอัตโนมัติ<br>หลังสแกนสำเร็จ';
+      document.getElementById('simulateScanBtn').textContent = "จำลองการสแกนสำเร็จ →";
+    }
+  }
+
+  function showScanBlocked(message) {
+    const camWrap = document.querySelector('.cam-wrap');
+    const scanAction = document.querySelector('.scan-action');
+    if (camWrap) camWrap.style.display = 'none';
+    if (scanAction) {
+      scanAction.innerHTML = `
+        <div class="block-box"><p>${message}</p></div>
+        <button class="btn-outline-light" onclick="window.location.href='Student.html'">กลับหน้าหลัก</button>
+      `;
+    }
+  }
+
+  loadEventFromUrl();
+</script>
+
+<script>
+  // ---------- Survey (post-check-in satisfaction form) ----------
+  let selectedStars = 0;
+  const starLabels = { 1: "ควรปรับปรุง", 2: "พอใช้", 3: "ปานกลาง", 4: "ดี", 5: "ดีมาก" };
+
+  document.querySelectorAll("#starRow .star-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedStars = Number(btn.dataset.star);
+      document.querySelectorAll("#starRow .star-btn").forEach(b => {
+        b.classList.toggle("selected", Number(b.dataset.star) <= selectedStars);
+      });
+      document.getElementById("starLabel").textContent = starLabels[selectedStars] || "";
+      document.getElementById("surveyError").classList.remove("show");
+    });
+  });
+
+  async function getSessionUser() {
+    try { return JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { return null; }
+  }
+
+  async function loadAttendCountDisplay() {
+    const el = document.getElementById("surveyAttendCount");
+    if (!currentEventId) { el.textContent = "-"; return; }
+    try {
+      const res = await window.storage.get("responses:" + currentEventId, true);
+      const responses = res ? JSON.parse(res.value) : [];
+      el.textContent = responses.length;
+    } catch (e) {
+      el.textContent = "-";
+    }
+  }
+
+  document.getElementById("submitSurveyBtn").addEventListener("click", async () => {
+    const errorEl = document.getElementById("surveyError");
+    if (selectedStars === 0) {
+      errorEl.classList.add("show");
+      return;
+    }
+    errorEl.classList.remove("show");
+
+    const comment = document.getElementById("surveyComment").value.trim();
+    const session = await getSessionUser();
+
+    if (!currentEventId) {
+      // No specific event context (opened Scan.html directly) — just show thanks without saving.
+      goto("survey");
+      document.getElementById("surveyForm").style.display = "none";
+      document.getElementById("surveyThanks").style.display = "flex";
+      return;
+    }
+
+    try {
+      // Save this individual response
+      const key = "responses:" + currentEventId;
+      const res = await window.storage.get(key, true);
+      const responses = res ? JSON.parse(res.value) : [];
+      responses.push({
+        rating: selectedStars,
+        comment: comment,
+        respondent: session ? session.name : "ไม่ระบุ",
+        submittedAt: new Date().toISOString()
+      });
+      await window.storage.set(key, JSON.stringify(responses), true);
+
+      // Recalculate the event's KPI: average satisfaction + attendance count from responses
+      const eventsRes = await window.storage.get("events-list", true);
+      const events = eventsRes ? JSON.parse(eventsRes.value) : [];
+      const idx = events.findIndex(e => e.id === currentEventId);
+      if (idx !== -1) {
+        const avgRating = responses.reduce((sum, r) => sum + r.rating, 0) / responses.length;
+        events[idx].kpiSatActual = avgRating.toFixed(1);
+        events[idx].kpiAttendActual = responses.length;
+        await window.storage.set("events-list", JSON.stringify(events), true);
+      }
+    } catch (e) {
+      console.error("บันทึกแบบประเมินไม่สำเร็จ", e);
+    }
+
+    document.getElementById("surveyForm").style.display = "none";
+    document.getElementById("surveyThanks").style.display = "flex";
+  });
+
+  // Refresh the attendance count shown whenever the survey view becomes active
+  const surveyViewEl = document.getElementById("view-survey");
+  new MutationObserver(() => {
+    if (surveyViewEl.classList.contains("active")) loadAttendCountDisplay();
+  }).observe(surveyViewEl, { attributes: true, attributeFilter: ["class"] });
+</script>
+
+<script>
+  (function enforceSession() {
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
+
+    if (!session) {
+      window.location.href = "index.html";
+      return;
+    }
+    // Both participants (checking in) and organizers (testing the flow) may land here,
+    // so we don't force-redirect organizers/admins away from Scan.html.
+  })();
+
+  document.getElementById("logout-link").addEventListener("click", () => {
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+</script>
+
+<script>
+  // ---------- Simulate-scan → verify → success/fail resolution ----------
+  document.getElementById('simulateScanBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    goto('verify');
+    await runVerification();
+  });
+
+  async function runVerification() {
+    // small delay to let the "verifying" animation show, mirroring the original UX
+    await new Promise(r => setTimeout(r, 700));
+
+    if (!currentUser) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // 1) Network / event lookup failure
+    if (pendingFailReason === "network" || !currentEventId) {
+      resolveFail("network");
+      return;
+    }
+
+    // 2) Time-overlap check (only relevant for check-in, same-day events)
+    if (scanStage === "checkin") {
+      const records = await getAllAttendanceRecords();
+      const myOtherRecords = records.filter(r => r.userEmail === currentUser.name && r.eventId !== currentEventId && r.checkInTime);
+      try {
+        const evRes = await window.storage.get("events-list", true);
+        const allEvents = evRes ? JSON.parse(evRes.value) : [];
+        for (const rec of myOtherRecords) {
+          const otherEvent = allEvents.find(ev => ev.id === rec.eventId);
+          if (!otherEvent) continue;
+          const sameDay = otherEvent.date && currentEvent.date && otherEvent.date === currentEvent.date;
+          if (sameDay && timesOverlap(currentEvent.startTime, currentEvent.endTime, otherEvent.startTime, otherEvent.endTime)) {
+            resolveFail("overlap", otherEvent.title);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("ตรวจสอบเวลาทับซ้อนไม่สำเร็จ", err);
+      }
+    }
+
+    // 3) Real GPS check via the browser's Geolocation API, compared against the event's room coordinates.
+    const geoResult = await checkRealLocation();
+    if (!geoResult.ok) {
+      resolveFail("geo", null, geoResult);
+      return;
+    }
+
+    await resolveSuccess();
+  }
+
+  // Reads the device's real GPS position and compares it to currentEvent.geoLat/geoLng using
+  // the Haversine formula. Requires HTTPS (or localhost) and user permission.
+  function checkRealLocation() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ ok: false, reason: "unsupported" });
+        return;
+      }
+      if (!currentEvent || !currentEvent.geoLat || !currentEvent.geoLng) {
+        // No room coordinates configured for this event — nothing to check against.
+        resolve({ ok: true });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const distanceMeters = haversineDistance(
+            pos.coords.latitude, pos.coords.longitude,
+            currentEvent.geoLat, currentEvent.geoLng
+          );
+          const radius = currentEvent.geoRadius || systemConfig.defaultGeoRadius || 100;
+          resolve({ ok: distanceMeters <= radius, distance: Math.round(distanceMeters), radius });
+        },
+        (err) => {
+          // err.code: 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
+          resolve({ ok: false, reason: err.code === 1 ? "denied" : "unavailable" });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  }
+
+  function haversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  async function resolveSuccess() {
+    const records = await getAllAttendanceRecords();
+    let myRecord = records.find(r => r.eventId === currentEventId && r.userEmail === currentUser.name);
+    const nowIso = new Date().toISOString();
+    const nowLabel = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+
+    if (scanStage === "checkin") {
+      myRecord = { eventId: currentEventId, userEmail: currentUser.name, checkInTime: nowIso, checkOutTime: null };
+      records.push(myRecord);
+      await saveAllAttendanceRecords(records);
+
+      document.getElementById('checkoutBadge').style.display = 'none';
+      document.getElementById('successTitle').textContent = 'เช็คชื่อ (เข้า) สำเร็จ';
+      document.getElementById('successSub').textContent = 'บันทึกเวลาเข้าร่วมกิจกรรมของท่านเรียบร้อยแล้ว';
+      document.getElementById('successEventName').textContent = currentEventName;
+      document.getElementById('successCheckinTime').textContent = nowLabel;
+      document.getElementById('successCheckoutRow').style.display = 'none';
+      document.getElementById('successPercentRow').style.display = 'none';
+      document.getElementById('successStatusBadge').textContent = 'เช็คชื่อเข้าแล้ว';
+      document.getElementById('successActionsCheckin').style.display = 'flex';
+      document.getElementById('successActionsCheckout').style.display = 'none';
+    } else {
+      // checkout
+      const idx = records.findIndex(r => r.eventId === currentEventId && r.userEmail === currentUser.name);
+      if (idx !== -1) {
+        records[idx].checkOutTime = nowIso;
+        await saveAllAttendanceRecords(records);
+        myRecord = records[idx];
+      }
+
+      const requiredPercent = currentEvent.minAttendPercent !== undefined ? currentEvent.minAttendPercent : systemConfig.minAttendPercent;
+      let percent = null;
+      let success = true;
+      if (currentEvent.date && currentEvent.startTime && currentEvent.endTime && myRecord && myRecord.checkInTime) {
+        const dayStart = new Date(`${currentEvent.date}T${currentEvent.startTime}`);
+        const dayEnd = new Date(`${currentEvent.date}T${currentEvent.endTime}`);
+        const totalMs = Math.max(1, dayEnd - dayStart);
+        const inTime = new Date(myRecord.checkInTime);
+        const outTime = new Date(myRecord.checkOutTime);
+        const presentStart = inTime < dayStart ? dayStart : inTime;
+        const presentEnd = outTime > dayEnd ? dayEnd : outTime;
+        const presentMs = Math.max(0, presentEnd - presentStart);
+        percent = Math.min(100, Math.round((presentMs / totalMs) * 100));
+        success = percent >= requiredPercent;
+      }
+
+      document.getElementById('checkoutBadge').style.display = 'inline-flex';
+      document.getElementById('successTitle').textContent = success ? 'เช็คชื่อ (ออก) สำเร็จ' : 'เช็คชื่อออกสำเร็จ แต่เวลาเข้าร่วมไม่ครบเกณฑ์';
+      document.getElementById('successSub').textContent = success
+        ? 'บันทึกการเข้าร่วมกิจกรรมของท่านครบสมบูรณ์แล้ว'
+        : `ท่านอยู่ในกิจกรรมไม่ถึงเกณฑ์ขั้นต่ำ ${requiredPercent}% ที่กำหนดไว้`;
+      document.getElementById('successEventName').textContent = currentEventName;
+      document.getElementById('successCheckinTime').textContent = myRecord && myRecord.checkInTime
+        ? new Date(myRecord.checkInTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-';
+      document.getElementById('successCheckoutRow').style.display = 'flex';
+      document.getElementById('successCheckoutTime').textContent = nowLabel;
+      if (percent !== null) {
+        document.getElementById('successPercentRow').style.display = 'flex';
+        document.getElementById('successPercent').textContent = `${percent}% (เกณฑ์ ${requiredPercent}%)`;
+      }
+      document.getElementById('successStatusBadge').textContent = success ? 'เข้าร่วมสำเร็จ' : 'เข้าร่วมไม่ครบเกณฑ์';
+      document.getElementById('successStatusBadge').style.background = success ? '' : 'var(--red)';
+      document.getElementById('successActionsCheckin').style.display = 'none';
+      document.getElementById('successActionsCheckout').style.display = 'flex';
+    }
+
+    goto('success');
+  }
+
+  function resolveFail(reason, extra, geoInfo) {
+    pendingFailReason = null;
+    const titleEl = document.getElementById('failTitle');
+    const subEl = document.getElementById('failSub');
+    const reasonBox = document.getElementById('failReasonBox');
+    const reasonText = document.getElementById('failReasonText');
+    const distanceTag = document.getElementById('failDistanceTag');
+    const fallbackBox = document.getElementById('failFallbackBox');
+    const fallbackHint = document.getElementById('fallbackHint');
+    const manualBtn = document.getElementById('manualCodeBtn');
+    const exceptionBtn = document.getElementById('requestExceptionBtn');
+    const defaultActions = document.getElementById('failActionsDefault');
+
+    // reset visibility
+    document.getElementById('manualCodeForm').style.display = 'none';
+    document.getElementById('exceptionSentBox').style.display = 'none';
+    manualBtn.style.display = 'none';
+    exceptionBtn.style.display = 'none';
+    defaultActions.style.display = 'flex';
+    distanceTag.style.display = 'none';
+    fallbackBox.style.display = 'block';
+
+    if (reason === 'geo') {
+      titleEl.textContent = 'อยู่นอกพื้นที่ที่กำหนด';
+      subEl.textContent = 'ไม่สามารถบันทึกการเช็คชื่อได้';
+      reasonBox.style.display = 'flex';
+
+      if (geoInfo && geoInfo.reason === 'denied') {
+        reasonText.textContent = 'ท่านยังไม่ได้อนุญาตให้เว็บไซต์เข้าถึงตำแหน่ง กรุณาอนุญาต location permission ในเบราว์เซอร์แล้วลองใหม่';
+      } else if (geoInfo && geoInfo.reason === 'unsupported') {
+        reasonText.textContent = 'อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง (GPS)';
+      } else if (geoInfo && geoInfo.reason === 'unavailable') {
+        reasonText.textContent = 'ไม่สามารถอ่านค่าตำแหน่ง GPS ได้ในขณะนี้ กรุณาลองใหม่ในที่โล่งหรือเปิดสัญญาณ GPS ของอุปกรณ์';
+      } else {
+        reasonText.textContent = 'ตำแหน่งของท่านอยู่นอกรัศมี Geo-fencing ที่อาจารย์กำหนดไว้สำหรับกิจกรรมนี้';
+      }
+
+      if (geoInfo && geoInfo.distance !== undefined) {
+        distanceTag.innerHTML = `ห่างจากจุดเช็คชื่อประมาณ <b>${geoInfo.distance} เมตร</b> (รัศมีที่กำหนด ${geoInfo.radius} เมตร)`;
+        distanceTag.style.display = 'block';
+      }
+
+      fallbackHint.textContent = 'หากท่านอยู่ในพื้นที่จริงแต่ GPS คลาดเคลื่อน สามารถส่งคำขอเช็คชื่อกรณีพิเศษให้อาจารย์อนุมัติได้';
+      exceptionBtn.style.display = 'block';
+    } else if (reason === 'camera') {
+      titleEl.textContent = 'สแกน QR ไม่สำเร็จ';
+      subEl.textContent = 'กล้องหรือ QR Code อาจมีปัญหา';
+      reasonBox.style.display = 'flex';
+      reasonText.textContent = 'ไม่สามารถอ่านรหัส QR ได้ อาจเกิดจากกล้องอุปกรณ์ แสงสะท้อน หรือ QR Code หมดอายุ';
+      fallbackHint.textContent = 'ท่านสามารถกรอกรหัสกิจกรรมที่อาจารย์แจ้งหน้าห้องแทนการสแกนได้';
+      manualBtn.style.display = 'block';
+    } else if (reason === 'overlap') {
+      titleEl.textContent = 'ไม่สามารถเช็คชื่อได้';
+      subEl.textContent = 'พบกิจกรรมที่เวลาทับซ้อนกัน';
+      reasonBox.style.display = 'flex';
+      reasonText.textContent = `ท่านเช็คชื่อเข้าร่วมกิจกรรม "${extra || 'อื่น'}" ไว้แล้ว ซึ่งมีช่วงเวลาทับซ้อนกับกิจกรรมนี้ ระบบไม่อนุญาตให้เช็คชื่อสองกิจกรรมที่เวลาเดียวกัน`;
+      fallbackBox.style.display = 'none';
+    } else {
+      // network / lookup failure
+      titleEl.textContent = 'บันทึกข้อมูลไม่สำเร็จ';
+      subEl.textContent = 'อาจมีปัญหาการเชื่อมต่ออินเทอร์เน็ต';
+      reasonBox.style.display = 'flex';
+      reasonText.textContent = 'ไม่สามารถเชื่อมต่อเพื่อบันทึกการเช็คชื่อได้ในขณะนี้ กรุณาลองใหม่อีกครั้งเมื่อสัญญาณอินเทอร์เน็ตกลับมาปกติ';
+      fallbackHint.textContent = 'ระบบจะไม่บันทึกเวลาเช็คชื่อจนกว่าจะเชื่อมต่อสำเร็จ เพื่อป้องกันข้อมูลผิดพลาด';
+    }
+
+    goto('fail');
+  }
+
+  // Camera-fail simulation entry point (kept accessible; original mock only had one "simulate success" path)
+  document.getElementById('simulateScanBtn').addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    goto('verify');
+    setTimeout(() => resolveFail('camera'), 500);
+  });
+
+  // ---------- Fallback: manual event code ----------
+  document.getElementById('manualCodeBtn').addEventListener('click', () => {
+    document.getElementById('failFallbackBox').style.display = 'none';
+    document.getElementById('failActionsDefault').style.display = 'none';
+    document.getElementById('manualCodeForm').style.display = 'block';
+  });
+
+  document.getElementById('submitManualCodeBtn').addEventListener('click', async () => {
+    const code = document.getElementById('manualCodeInput').value.trim();
+    const errorEl = document.getElementById('manualCodeError');
+    const expectedCode = currentEvent && currentEvent.manualCode ? String(currentEvent.manualCode) : null;
+
+    if (!code || (expectedCode && code !== expectedCode)) {
+      errorEl.classList.add('show');
+      return;
+    }
+    errorEl.classList.remove('show');
+    await resolveSuccess();
+  });
+
+  // ---------- Fallback: request exception check-in (pending teacher approval) ----------
+  document.getElementById('requestExceptionBtn').addEventListener('click', async () => {
+    try {
+      const key = "exception-requests:" + currentEventId;
+      const res = await window.storage.get(key, true);
+      const list = res ? JSON.parse(res.value) : [];
+      list.push({
+        userEmail: currentUser ? currentUser.name : "ไม่ระบุ",
+        requestedAt: new Date().toISOString(),
+        status: "pending"
+      });
+      await window.storage.set(key, JSON.stringify(list), true);
+    } catch (e) {
+      console.error("ส่งคำขอเช็คชื่อกรณีพิเศษไม่สำเร็จ", e);
+    }
+    document.getElementById('failFallbackBox').style.display = 'none';
+    document.getElementById('failActionsDefault').style.display = 'none';
+    document.getElementById('exceptionSentBox').style.display = 'block';
+  });
+
+  // "เสร็จสิ้น (รอสแกนออกภายหลัง)" — just go back to Student home, checkout happens on next scan
+  document.getElementById('goCheckoutBtn').addEventListener('click', () => {
+    window.location.href = 'Student.html';
+  });
+</script>
+
+</body>
+</html>

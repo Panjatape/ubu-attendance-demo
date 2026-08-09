@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบจัดการกิจกรรม</title>
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --card: #ffffff;
+    --border: #e2e0da;
+    --border-strong: #cfccc4;
+    --text: #2c2c2a;
+    --text-secondary: #6b6a64;
+    --text-muted: #96958d;
+    --accent: #185fa5;
+    --accent-bg: #e6f1fb;
+    --accent-text: #0c447c;
+    --success: #3b6d11;
+    --success-bg: #eaf3de;
+    --danger: #993c1d;
+    --danger-bg: #faece7;
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .app { max-width: 960px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+  p { margin: 0; }
+  .muted { color: var(--text-secondary); font-size: 14px; }
+
+  /* Login screen */
+  .login-wrap {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 380px;
+  }
+  .login-card h1 { text-align: center; margin-bottom: 4px; }
+  .login-card .muted { text-align: center; display: block; margin-bottom: 24px; }
+
+  label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 15px;
+    font-family: var(--font);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  button {
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-strong);
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+  }
+  button:hover { background: #f2f1ee; }
+  button:active { transform: scale(0.98); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #14508c; }
+  button.block { width: 100%; }
+  button.danger { color: var(--danger); }
+  button.small { padding: 6px 12px; font-size: 13px; }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .who { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent-text);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px;
+  }
+
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+  }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters select { margin-bottom: 0; width: auto; min-width: 140px; }
+
+  /* Event cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .event-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .event-card .thumb {
+    width: 100%; height: 140px; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 13px;
+    overflow: hidden;
+  }
+  .event-card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .event-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 500;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--accent-bg); color: var(--accent-text);
+    width: fit-content;
+  }
+  .event-title { font-size: 16px; font-weight: 600; }
+  .meta-row { display: flex; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+  .kpi-row { display: flex; gap: 8px; margin-top: 4px; }
+  .kpi-chip {
+    flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 10px;
+    font-size: 12px; text-align: center;
+  }
+  .kpi-chip .val { font-size: 15px; font-weight: 600; display: block; }
+  .kpi-chip.hit .val { color: var(--success); }
+  .kpi-chip.miss .val { color: var(--danger); }
+  .card-actions { display: flex; gap: 8px; padding: 0 16px 14px; }
+  .card-actions button { flex: 1; }
+
+  /* Modal / form */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 30px 16px; overflow-y: auto; z-index: 50;
+  }
+  .modal {
+    background: var(--card); border-radius: 16px; padding: 24px 26px;
+    width: 100%; max-width: 560px;
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .close-x { border: none; background: none; font-size: 20px; padding: 4px 8px; cursor: pointer; color: var(--text-secondary); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .section-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 4px 0 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .divider { border-top: 1px solid var(--border); margin: 18px 0; }
+
+  .team-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .team-tag {
+    background: var(--bg); border-radius: 20px; padding: 5px 10px 5px 12px;
+    font-size: 13px; display: flex; align-items: center; gap: 6px;
+  }
+  .team-tag button { border: none; background: none; padding: 0; font-size: 14px; color: var(--text-muted); cursor: pointer; }
+  .add-team-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .add-team-row input { margin-bottom: 0; flex: 1; }
+  .add-team-row button { flex-shrink: 0; }
+
+  .img-upload {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    background: var(--bg);
+  }
+  .img-upload:hover { border-color: var(--accent); }
+  .img-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .img-preview { position: relative; border-radius: 8px; overflow: hidden; height: 80px; background: var(--bg); }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .img-preview .rm {
+    position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.55);
+    color: #fff; border: none; width: 20px; height: 20px; border-radius: 50%;
+    font-size: 12px; cursor: pointer; line-height: 1;
+  }
+
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 6px; }
+  .kpi-box { background: var(--bg); border-radius: 10px; padding: 12px; }
+  .kpi-box label { margin-bottom: 4px; }
+  .kpi-box .mini-row { display: flex; gap: 8px; }
+  .kpi-box .mini-row input { margin-bottom: 0; }
+  .mini-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+
+  .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .form-actions button { flex: 1; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+
+  .error-text { color: var(--danger); font-size: 13px; margin: -10px 0 14px; }
+  .stat-strip { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 120px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat-box .num { font-size: 20px; font-weight: 600; }
+  .stat-box .lbl { font-size: 12px; color: var(--text-secondary); }
+
+  /* Geo-fencing */
+  .geo-box {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .geo-locate-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .geo-locate-row button {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    white-space: nowrap;
+  }
+  .geo-locate-row button:hover { background: #14508c; }
+  .geo-locate-row button:disabled { opacity: 0.6; cursor: default; }
+  .geo-coords {
+    font-size: 13px; color: var(--text-secondary);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .geo-coords.set { color: var(--text); }
+  .geo-map-preview {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e8ecf1;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .geo-map-preview.empty { color: var(--text-muted); font-size: 13px; }
+  .geo-map-preview svg { width: 100%; height: 100%; }
+  .geo-radius-row { display: flex; gap: 8px; align-items: center; }
+  .geo-radius-row .mini-label { margin-right: 4px; }
+  .radius-pill {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .radius-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+  .geo-hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const EVENT_TYPES = ["กิจกรรมวิชาการ", "กิจกรรมนักศึกษา", "อบรม/สัมมนา", "กีฬา", "ศิลปวัฒนธรรม", "จิตอาสา", "ประชาสัมพันธ์", "อื่นๆ"];
+const ACADEMIC_YEARS = ["2567", "2568", "2569"];
+const SEMESTERS = ["ภาค 1", "ภาค 2", "ภาคพิเศษ"];
+const FACULTIES = [
+  "คณะวิทยาศาสตร์",
+  "คณะเกษตรศาสตร์",
+  "คณะวิศวกรรมศาสตร์",
+  "คณะศิลปศาสตร์",
+  "คณะเภสัชศาสตร์",
+  "คณะบริหารศาสตร์",
+  "คณะพยาบาลศาสตร์",
+  "วิทยาลัยแพทยศาสตร์และการสาธารณสุข",
+  "คณะศิลปประยุกต์และสถาปัตยกรรมศาสตร์",
+  "คณะนิติศาสตร์",
+  "คณะรัฐศาสตร์",
+  "คณะศึกษาศาสตร์"
+];
+
+let state = {
+  currentUser: null,
+  events: [],
+  filterType: "",
+  editingId: null,
+  formImages: [],
+  formTeam: [],
+  formGeo: { lat: null, lng: null, radius: 100 }
+};
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+async function loadEvents() {
+  try {
+    const res = await window.storage.get("events-list", true);
+    state.events = res ? JSON.parse(res.value) : [];
+  } catch (e) {
+    state.events = [];
+  }
+}
+
+async function saveEvents() {
+  try {
+    await window.storage.set("events-list", JSON.stringify(state.events), true);
+  } catch (e) {
+    console.error("Save failed", e);
+    alert("บันทึกข้อมูลไม่สำเร็จ ลองอีกครั้ง");
+  }
+}
+
+function initials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+}
+
+function fmtDate(d) {
+  if (!d) return "-";
+  try {
+    return new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
+  } catch (e) { return d; }
+}
+
+function render() {
+  const app = document.getElementById("app");
+  if (!state.currentUser) {
+    // No local user set — this now only happens if session enforcement below fails somehow.
+    app.innerHTML = renderLogin();
+    attachLoginHandlers();
+    return;
+  }
+  app.innerHTML = renderMain();
+  attachMainHandlers();
+}
+
+function renderLogin() {
+  return `
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>ระบบจัดการกิจกรรม</h1>
+        <span class="muted">เข้าสู่ระบบด้วยชื่อของคุณเพื่อบันทึกและติดตามกิจกรรม</span>
+        <label for="login-name">ชื่อผู้ใช้</label>
+        <input type="text" id="login-name" placeholder="เช่น สมชาย ใจดี" autocomplete="name">
+        <div id="login-error" class="error-text" style="display:none;"></div>
+        <button class="primary block" id="login-btn">เข้าสู่ระบบ</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachLoginHandlers() {
+  const btn = document.getElementById("login-btn");
+  const input = document.getElementById("login-name");
+  const doLogin = () => {
+    const name = input.value.trim();
+    if (!name) {
+      const err = document.getElementById("login-error");
+      err.textContent = "กรุณากรอกชื่อผู้ใช้";
+      err.style.display = "block";
+      return;
+    }
+    state.currentUser = name;
+    render();
+  };
+  btn.addEventListener("click", doLogin);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+  input.focus();
+}
+
+function renderMain() {
+  const filtered = state.filterType
+    ? state.events.filter(e => e.type === state.filterType)
+    : state.events;
+
+  const sorted = [...filtered].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const totalEvents = state.events.length;
+  const totalAttendees = state.events.reduce((s, e) => s + (Number(e.kpiAttendActual) || 0), 0);
+  const satScores = state.events.filter(e => e.kpiSatActual).map(e => Number(e.kpiSatActual));
+  const avgSat = satScores.length ? (satScores.reduce((a, b) => a + b, 0) / satScores.length).toFixed(1) : "-";
+
+  return `
+    <div class="topbar">
+      <div>
+        <h1>ระบบจัดการกิจกรรม</h1>
+        <span class="muted">บันทึกรายละเอียด รูปภาพ และ KPI ของกิจกรรม</span>
+      </div>
+      <div class="who">
+        <a href="Reports.html" class="small" style="text-decoration:none; display:inline-flex; align-items:center; padding:6px 12px; border:1px solid var(--border-strong); border-radius:8px; color:var(--text); margin-right:10px;">📊 ดูรายงาน</a>
+        <div class="avatar">${initials(state.currentUser)}</div>
+        <div>
+          <p style="font-size:14px; font-weight:500;">${escapeHtml(state.currentUser)}</p>
+          <button class="small" id="logout-btn" style="padding:2px 8px; font-size:12px; border:none; color:var(--text-muted); background:none;">ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-box"><div class="num">${totalEvents}</div><div class="lbl">กิจกรรมทั้งหมด</div></div>
+      <div class="stat-box"><div class="num">${totalAttendees.toLocaleString()}</div><div class="lbl">ผู้เข้าร่วมสะสม</div></div>
+      <div class="stat-box"><div class="num">${avgSat}</div><div class="lbl">คะแนนความพึงพอใจเฉลี่ย</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <select id="filter-type">
+          <option value="">ทุกประเภท</option>
+          ${EVENT_TYPES.map(t => `<option value="${t}" ${state.filterType === t ? "selected" : ""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <button class="primary" id="new-event-btn">+ เพิ่มกิจกรรม</button>
+    </div>
+
+    ${sorted.length === 0 ? `<div class="empty"><p>ยังไม่มีกิจกรรม</p><p class="muted">กดปุ่ม "เพิ่มกิจกรรม" เพื่อเริ่มบันทึก</p></div>` : `
+    <div class="grid">
+      ${sorted.map(renderEventCard).join("")}
+    </div>
+    `}
+
+    <div id="modal-root"></div>
+  `;
+}
+
+function renderEventCard(e) {
+  const cover = e.images && e.images.length ? e.images[0] : null;
+  const attendHit = e.kpiAttendTarget && e.kpiAttendActual && Number(e.kpiAttendActual) >= Number(e.kpiAttendTarget);
+  const satHit = e.kpiSatTarget && e.kpiSatActual && Number(e.kpiSatActual) >= Number(e.kpiSatTarget);
+
+  return `
+    <div class="event-card">
+      <div class="thumb">
+        ${cover ? `<img src="${cover}" alt="">` : `ไม่มีรูปภาพ`}
+      </div>
+      <div class="event-body">
+        <span class="badge">${escapeHtml(e.type || "ไม่ระบุประเภท")}</span>
+        <div class="event-title">${escapeHtml(e.title || "(ไม่มีชื่อ)")}</div>
+        <div class="meta-row">
+          <span>${fmtDate(e.date)}</span>
+          <span>·</span>
+          <span>Host: ${escapeHtml(e.host || "-")}</span>
+          ${e.geoLat ? `<span>·</span><span title="จำกัดพื้นที่เช็คชื่อ รัศมี ${e.geoRadius} ม.">📍 ${e.geoRadius}ม.</span>` : ""}
+        </div>
+        ${(e.academicYear || e.semester || e.faculty) ? `
+        <div class="meta-row" style="flex-wrap:wrap;">
+          ${e.academicYear ? `<span>ปีการศึกษา ${escapeHtml(e.academicYear)}</span>` : ""}
+          ${e.semester ? `<span>·</span><span>${escapeHtml(e.semester)}</span>` : ""}
+          ${e.faculty ? `<span>·</span><span>${escapeHtml(e.faculty)}</span>` : ""}
+        </div>` : ""}
+        ${e.description ? `<p class="muted" style="font-size:13px;">${escapeHtml(truncate(e.description, 90))}</p>` : ""}
+        ${(e.kpiAttendTarget || e.kpiSatTarget) ? `
+        <div class="kpi-row">
+          ${e.kpiAttendTarget ? `
+          <div class="kpi-chip ${e.kpiAttendActual ? (attendHit ? 'hit' : 'miss') : ''}">
+            <span class="val">${e.kpiAttendActual || "-"}/${e.kpiAttendTarget}</span>
+            ผู้เข้าร่วม
+          </div>` : ""}
+          ${e.kpiSatTarget ? `
+          <div class="kpi-chip ${e.kpiSatActual ? (satHit ? 'hit' : 'miss') : ''}">
+            <span class="val">${e.kpiSatActual || "-"}/${e.kpiSatTarget}</span>
+            ความพึงพอใจ
+          </div>` : ""}
+        </div>` : ""}
+      </div>
+      <div class="card-actions">
+        <a class="small" href="Scan_Organizer.html?event=${encodeURIComponent(e.id)}" style="flex:1; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border-strong); border-radius:8px; padding:7px; color:var(--text); font-size:13px;">📽️ ฉาย QR</a>
+        <button class="small edit-btn" data-id="${e.id}">แก้ไข</button>
+        <button class="small danger del-btn" data-id="${e.id}">ลบ</button>
+      </div>
+    </div>
+  `;
+}
+
+function truncate(s, n) { return s.length > n ? s.slice(0, n) + "…" : s; }
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+function attachMainHandlers() {
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+  document.getElementById("filter-type").addEventListener("change", (e) => {
+    state.filterType = e.target.value;
+    render();
+  });
+  document.getElementById("new-event-btn").addEventListener("click", () => openForm(null));
+  document.querySelectorAll(".edit-btn").forEach(b => {
+    b.addEventListener("click", () => openForm(b.dataset.id));
+  });
+  document.querySelectorAll(".del-btn").forEach(b => {
+    b.addEventListener("click", async () => {
+      if (confirm("ยืนยันการลบกิจกรรมนี้?")) {
+        state.events = state.events.filter(ev => ev.id !== b.dataset.id);
+        await saveEvents();
+        render();
+      }
+    });
+  });
+}
+
+function renderGeoMap() {
+  const preview = document.getElementById("geo-map-preview");
+  const coordsText = document.getElementById("geo-coords-text");
+  if (!preview) return;
+
+  if (!state.formGeo.lat) {
+    preview.classList.add("empty");
+    preview.innerHTML = `<span>แผนที่แสดงพื้นที่รัศมีจะปรากฏที่นี่หลังปักหมุด</span>`;
+    if (coordsText) {
+      coordsText.textContent = "ยังไม่ได้ปักหมุด";
+      coordsText.classList.remove("set");
+    }
+    return;
+  }
+
+  preview.classList.remove("empty");
+
+  // Fixed scale: 1 meter = pxPerMeter pixels, so the circle's real size actually reflects the radius chosen.
+  const radius = state.formGeo.radius;
+  const pxPerMeter = 0.55;
+  const r = radius * pxPerMeter;
+  const cx = 150, cy = 90;
+
+  // Pick a "nice" scale bar length (in meters) that fits comfortably in the preview
+  const scaleMeters = radius <= 50 ? 20 : radius <= 100 ? 50 : 100;
+  const scalePx = scaleMeters * pxPerMeter;
+
+  // Deterministic pseudo-random building block layout, seeded from the coordinates so it
+  // doesn't jump around every re-render, but still varies between different pin locations.
+  const seed = Math.abs(Math.round((state.formGeo.lat + state.formGeo.lng) * 10000)) % 1000;
+  function rand(i) { return ((seed * (i + 7)) % 97) / 97; }
+
+  let buildings = "";
+  const blockCols = [0, 55, 115, 185, 245, 300];
+  const blockRows = [0, 45, 95, 140, 180];
+  let bi = 0;
+  for (let row = 0; row < blockRows.length - 1; row++) {
+    for (let col = 0; col < blockCols.length - 1; col++) {
+      bi++;
+      if (rand(bi) < 0.25) continue; // leave some blocks empty (open ground/parks)
+      const bx = blockCols[col] + 4;
+      const by = blockRows[row] + 4;
+      const bw = (blockCols[col + 1] - blockCols[col]) - 8;
+      const bh = (blockRows[row + 1] - blockRows[row]) - 8;
+      const shade = rand(bi + 50) < 0.5 ? "#c9d2dd" : "#d6dee7";
+      buildings += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="2" fill="${shade}"/>`;
+    }
+  }
+
+  preview.innerHTML = `
+    <svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
+      <rect width="300" height="180" fill="#e8ecf1"/>
+      <g>${buildings}</g>
+      <path d="M0 45 H300 M0 95 H300 M0 140 H300" stroke="#fff" stroke-width="5"/>
+      <path d="M55 0 V180 M115 0 V180 M185 0 V180 M245 0 V180" stroke="#fff" stroke-width="5"/>
+      <path d="M0 45 H300 M0 95 H300 M0 140 H300" stroke="#b9c3cf" stroke-width="1"/>
+      <path d="M55 0 V180 M115 0 V180 M185 0 V180 M245 0 V180" stroke="#b9c3cf" stroke-width="1"/>
+
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(24,95,165,0.16)" stroke="var(--accent)" stroke-width="2"/>
+      <circle cx="${cx}" cy="${cy}" r="5" fill="var(--accent)"/>
+      <circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.5"/>
+      <text x="${cx}" y="${cy - r - 8 < 12 ? cy + r + 16 : cy - r - 8}" text-anchor="middle" font-size="10" fill="var(--accent)" font-weight="600">รัศมี ${radius} ม.</text>
+
+      <g transform="translate(12, 158)">
+        <line x1="0" y1="0" x2="${scalePx}" y2="0" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="0" y1="-3" x2="0" y2="3" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="${scalePx}" y1="-3" x2="${scalePx}" y2="3" stroke="#4a5568" stroke-width="1.5"/>
+        <text x="${scalePx / 2}" y="14" text-anchor="middle" font-size="9" fill="#4a5568">${scaleMeters} ม.</text>
+      </g>
+
+      <g transform="translate(278, 20)">
+        <circle r="12" fill="#fff" stroke="#b9c3cf" stroke-width="1"/>
+        <path d="M0 -8 L3 3 L0 0 L-3 3 Z" fill="#B3432E"/>
+        <text y="20" text-anchor="middle" font-size="8" fill="#6b7684">N</text>
+      </g>
+    </svg>
+  `;
+  if (coordsText) {
+    coordsText.textContent = `${state.formGeo.lat.toFixed(5)}, ${state.formGeo.lng.toFixed(5)}`;
+    coordsText.classList.add("set");
+  }
+
+  document.querySelectorAll(".radius-pill").forEach(p => {
+    p.classList.toggle("active", Number(p.dataset.radius) === state.formGeo.radius);
+  });
+}
+
+async function openForm(id) {
+  state.editingId = id;
+  const existing = id ? state.events.find(e => e.id === id) : null;
+  state.formImages = existing ? [...(existing.images || [])] : [];
+  state.formTeam = existing ? [...(existing.team || [])] : [];
+
+  // Pull admin-configured defaults (geo radius + attendance-success criteria) for new events,
+  // and as a fallback whenever an existing event hasn't set its own override yet.
+  let defaultRadius = 100;
+  state.formDefaults = { requireCheckout: true, minAttendPercent: 80 };
+  try {
+    const res = await window.storage.get("system-config", true);
+    if (res) {
+      const cfg = JSON.parse(res.value);
+      if (cfg.defaultGeoRadius) defaultRadius = cfg.defaultGeoRadius;
+      if (cfg.requireCheckout !== undefined) state.formDefaults.requireCheckout = cfg.requireCheckout;
+      if (cfg.minAttendPercent !== undefined) state.formDefaults.minAttendPercent = cfg.minAttendPercent;
+    }
+  } catch (e) {
+    console.error("โหลดค่าเริ่มต้นระบบไม่สำเร็จ", e);
+  }
+
+  if (existing && existing.geoLat) {
+    state.formGeo = { lat: existing.geoLat, lng: existing.geoLng, radius: existing.geoRadius || 100 };
+  } else {
+    state.formGeo = { lat: null, lng: null, radius: defaultRadius };
+  }
+
+  const modalRoot = document.getElementById("modal-root");
+  modalRoot.innerHTML = renderForm(existing);
+  attachFormHandlers(existing);
+}
+
+function renderForm(e) {
+  e = e || {};
+  return `
+    <div class="overlay" id="form-overlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>${state.editingId ? "แก้ไขกิจกรรม" : "เพิ่มกิจกรรมใหม่"}</h2>
+          <button class="close-x" id="close-modal">✕</button>
+        </div>
+
+        <label for="f-title">ชื่อกิจกรรม</label>
+        <input type="text" id="f-title" value="${escapeHtml(e.title || "")}" placeholder="เช่น ปฐมนิเทศนักศึกษาใหม่">
+
+        <label for="f-type">ประเภทกิจกรรม</label>
+        <select id="f-type">
+          <option value="">เลือกประเภท</option>
+          ${EVENT_TYPES.map(t => `<option value="${t}" ${e.type === t ? "selected" : ""}>${t}</option>`).join("")}
+        </select>
+
+        <div class="row2">
+          <div>
+            <label for="f-year">ปีการศึกษา</label>
+            <select id="f-year">
+              <option value="">เลือกปีการศึกษา</option>
+              ${ACADEMIC_YEARS.map(y => `<option value="${y}" ${e.academicYear === y ? "selected" : ""}>${y}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label for="f-semester">ภาคเรียน</label>
+            <select id="f-semester">
+              <option value="">เลือกภาคเรียน</option>
+              ${SEMESTERS.map(s => `<option value="${s}" ${e.semester === s ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <label for="f-faculty">หลักสูตร / คณะ</label>
+        <select id="f-faculty">
+          <option value="">เลือกหลักสูตร/คณะ</option>
+          ${FACULTIES.map(f => `<option value="${f}" ${e.faculty === f ? "selected" : ""}>${f}</option>`).join("")}
+        </select>
+
+        <div class="row2">
+          <div>
+            <label for="f-date">วันที่จัดกิจกรรม</label>
+            <input type="date" id="f-date" value="${e.date || ""}">
+          </div>
+          <div>
+            <label for="f-host">ผู้จัด (Host)</label>
+            <input type="text" id="f-host" value="${escapeHtml(e.host || "")}" placeholder="ชื่อผู้รับผิดชอบหลัก">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label for="f-start-time">เวลาเริ่มกิจกรรม</label>
+            <input type="time" id="f-start-time" value="${e.startTime || ""}">
+          </div>
+          <div>
+            <label for="f-end-time">เวลาสิ้นสุดกิจกรรม</label>
+            <input type="time" id="f-end-time" value="${e.endTime || ""}">
+          </div>
+        </div>
+        <div class="geo-hint" style="margin:-8px 0 4px;">ใช้คำนวณเปอร์เซ็นต์เวลาที่เข้าร่วมจริง เทียบกับเวลาสแกนเข้า-ออกของผู้เข้าร่วม</div>
+
+        <label for="f-desc">รายละเอียดกิจกรรม</label>
+        <textarea id="f-desc" placeholder="อธิบายรายละเอียด วัตถุประสงค์ สถานที่ ฯลฯ">${escapeHtml(e.description || "")}</textarea>
+
+        <div class="section-label">ทีมงาน</div>
+        <div class="team-list" id="team-list"></div>
+        <div class="add-team-row">
+          <input type="text" id="team-input" placeholder="เพิ่มชื่อทีมงาน แล้วกด Enter">
+          <button id="add-team-btn" type="button">เพิ่ม</button>
+        </div>
+
+        <div class="section-label">รูปภาพกิจกรรม</div>
+        <div class="img-upload" id="img-upload-zone">
+          คลิกเพื่อเลือกรูปภาพ หรือลากไฟล์มาวาง (ใช้สำหรับทำ PR)
+        </div>
+        <input type="file" id="img-input" accept="image/*" multiple style="display:none;">
+        <div class="img-preview-grid" id="img-preview-grid"></div>
+
+        <div class="divider"></div>
+        <div class="section-label">Geo-fencing (จำกัดพื้นที่เช็คชื่อ)</div>
+        <div class="geo-box">
+          <div class="geo-locate-row">
+            <button type="button" id="geo-locate-btn">📍 ใช้ตำแหน่งปัจจุบัน</button>
+            <span class="geo-coords" id="geo-coords-text">${e.geoLat ? "set" : "ยังไม่ได้ปักหมุด"}</span>
+          </div>
+          <div class="geo-map-preview empty" id="geo-map-preview">
+            <span id="geo-map-placeholder">แผนที่แสดงพื้นที่รัศมีจะปรากฏที่นี่หลังปักหมุด</span>
+          </div>
+          <div class="geo-radius-row">
+            <span class="mini-label">รัศมีที่อนุญาต:</span>
+            <div class="radius-pill" data-radius="50">50 ม.</div>
+            <div class="radius-pill" data-radius="100">100 ม.</div>
+            <div class="radius-pill" data-radius="200">200 ม.</div>
+          </div>
+          <div class="geo-hint">ผู้เข้าร่วมต้องอยู่ภายในรัศมีที่กำหนดจากจุดนี้ขณะสแกน QR จึงจะเช็คชื่อผ่าน หากไม่ตั้งค่า ระบบจะไม่ตรวจสอบตำแหน่ง</div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">เกณฑ์ "เข้าร่วมสำเร็จ" ของกิจกรรมนี้</div>
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <label>บังคับสแกนเข้า + สแกนออก</label>
+            <div class="mini-row" style="align-items:center;">
+              <div class="toggle ${(e.requireCheckout !== undefined ? e.requireCheckout : state.formDefaults.requireCheckout) ? 'on' : ''}" id="f-require-checkout"><div class="knob"></div></div>
+              <span class="mini-label" style="flex:1;">หากปิด จะนับว่าเข้าร่วมสำเร็จจากการสแกนเข้าเพียงครั้งเดียว</span>
+            </div>
+          </div>
+          <div class="kpi-box">
+            <label>เปอร์เซ็นต์เวลาขั้นต่ำที่ต้องอยู่จริง</label>
+            <div class="mini-row">
+              <div style="flex:1;">
+                <input type="number" id="f-min-attend-percent" min="1" max="100" value="${e.minAttendPercent !== undefined ? e.minAttendPercent : state.formDefaults.minAttendPercent}">
+              </div>
+              <div class="mini-label" style="flex:1; align-self:center;">% ของช่วงเวลากิจกรรม (ค่าเริ่มต้นจากผู้ดูแลระบบ ปรับได้ต่อกิจกรรม)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">KPI วัดผล</div>
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <label>จำนวนผู้เข้าร่วม</label>
+            <div class="mini-row">
+              <div style="flex:1;">
+                <div class="mini-label">เป้าหมาย</div>
+                <input type="number" id="f-attend-target" min="0" value="${e.kpiAttendTarget || ""}">
+              </div>
+              <div style="flex:1;">
+                <div class="mini-label">ผลจริง</div>
+                <input type="number" id="f-attend-actual" min="0" value="${e.kpiAttendActual || ""}">
+              </div>
+            </div>
+          </div>
+          <div class="kpi-box">
+            <label>ระดับความพึงพอใจ (คะแนนเต็ม 5)</label>
+            <div class="mini-row">
+              <div style="flex:1;">
+                <div class="mini-label">เป้าหมาย</div>
+                <input type="number" id="f-sat-target" min="0" max="5" step="0.1" value="${e.kpiSatTarget || ""}">
+              </div>
+              <div style="flex:1;">
+                <div class="mini-label">ผลจริง</div>
+                <input type="number" id="f-sat-actual" min="0" max="5" step="0.1" value="${e.kpiSatActual || ""}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="form-error" class="error-text" style="display:none;"></div>
+
+        <div class="form-actions">
+          <button id="cancel-form-btn">ยกเลิก</button>
+          <button class="primary" id="save-form-btn">บันทึกกิจกรรม</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTeamList() {
+  const list = document.getElementById("team-list");
+  if (!list) return;
+  list.innerHTML = state.formTeam.map((name, i) => `
+    <div class="team-tag">
+      ${escapeHtml(name)}
+      <button data-idx="${i}" class="rm-team-btn" type="button">✕</button>
+    </div>
+  `).join("");
+  list.querySelectorAll(".rm-team-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      state.formTeam.splice(Number(b.dataset.idx), 1);
+      renderTeamList();
+    });
+  });
+}
+
+function renderImgPreviews() {
+  const grid = document.getElementById("img-preview-grid");
+  if (!grid) return;
+  grid.innerHTML = state.formImages.map((src, i) => `
+    <div class="img-preview">
+      <img src="${src}" alt="">
+      <button class="rm rm-img-btn" data-idx="${i}" type="button">✕</button>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".rm-img-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      state.formImages.splice(Number(b.dataset.idx), 1);
+      renderImgPreviews();
+    });
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function attachFormHandlers(existing) {
+  renderTeamList();
+  renderImgPreviews();
+  renderGeoMap();
+
+  document.getElementById("f-require-checkout").addEventListener("click", (e) => {
+    e.currentTarget.classList.toggle("on");
+  });
+
+  document.getElementById("geo-locate-btn").addEventListener("click", () => {
+    const btn = document.getElementById("geo-locate-btn");
+    if (!navigator.geolocation) {
+      alert("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง");
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "กำลังค้นหาตำแหน่ง…";
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        state.formGeo.lat = pos.coords.latitude;
+        state.formGeo.lng = pos.coords.longitude;
+        btn.disabled = false;
+        btn.textContent = "📍 ใช้ตำแหน่งปัจจุบัน";
+        renderGeoMap();
+      },
+      (err) => {
+        btn.disabled = false;
+        btn.textContent = "📍 ใช้ตำแหน่งปัจจุบัน";
+        alert("ไม่สามารถระบุตำแหน่งได้ กรุณาอนุญาตการเข้าถึงตำแหน่งของเบราว์เซอร์");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+  document.querySelectorAll(".radius-pill").forEach(p => {
+    p.addEventListener("click", () => {
+      state.formGeo.radius = Number(p.dataset.radius);
+      renderGeoMap();
+    });
+  });
+
+  document.getElementById("close-modal").addEventListener("click", closeForm);
+  document.getElementById("cancel-form-btn").addEventListener("click", closeForm);
+  document.getElementById("form-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "form-overlay") closeForm();
+  });
+
+  const teamInput = document.getElementById("team-input");
+  const addTeam = () => {
+    const val = teamInput.value.trim();
+    if (val) {
+      state.formTeam.push(val);
+      teamInput.value = "";
+      renderTeamList();
+    }
+  };
+  document.getElementById("add-team-btn").addEventListener("click", addTeam);
+  teamInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); addTeam(); }
+  });
+
+  const imgZone = document.getElementById("img-upload-zone");
+  const imgInput = document.getElementById("img-input");
+  imgZone.addEventListener("click", () => imgInput.click());
+  imgZone.addEventListener("dragover", (e) => { e.preventDefault(); imgZone.style.borderColor = "var(--accent)"; });
+  imgZone.addEventListener("dragleave", () => { imgZone.style.borderColor = "var(--border-strong)"; });
+  imgZone.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    imgZone.style.borderColor = "var(--border-strong)";
+    await handleFiles(e.dataTransfer.files);
+  });
+  imgInput.addEventListener("change", async (e) => {
+    await handleFiles(e.target.files);
+    imgInput.value = "";
+  });
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList).filter(f => f.type.startsWith("image/"));
+    for (const f of files) {
+      try {
+        const dataUrl = await fileToDataUrl(f);
+        state.formImages.push(dataUrl);
+      } catch (err) {
+        console.error("Image read failed", err);
+      }
+    }
+    renderImgPreviews();
+  }
+
+  document.getElementById("save-form-btn").addEventListener("click", async () => {
+    const title = document.getElementById("f-title").value.trim();
+    const type = document.getElementById("f-type").value;
+    const errBox = document.getElementById("form-error");
+
+    if (!title) {
+      errBox.textContent = "กรุณากรอกชื่อกิจกรรม";
+      errBox.style.display = "block";
+      return;
+    }
+    if (!type) {
+      errBox.textContent = "กรุณาเลือกประเภทกิจกรรม";
+      errBox.style.display = "block";
+      return;
+    }
+
+    const data = {
+      id: state.editingId || uid(),
+      title,
+      type,
+      academicYear: document.getElementById("f-year").value,
+      semester: document.getElementById("f-semester").value,
+      faculty: document.getElementById("f-faculty").value,
+      date: document.getElementById("f-date").value,
+      startTime: document.getElementById("f-start-time").value,
+      endTime: document.getElementById("f-end-time").value,
+      host: document.getElementById("f-host").value.trim(),
+      description: document.getElementById("f-desc").value.trim(),
+      team: [...state.formTeam],
+      images: [...state.formImages],
+      requireCheckout: document.getElementById("f-require-checkout").classList.contains("on"),
+      minAttendPercent: Number(document.getElementById("f-min-attend-percent").value) || state.formDefaults.minAttendPercent,
+      kpiAttendTarget: document.getElementById("f-attend-target").value,
+      kpiAttendActual: document.getElementById("f-attend-actual").value,
+      kpiSatTarget: document.getElementById("f-sat-target").value,
+      kpiSatActual: document.getElementById("f-sat-actual").value,
+      geoLat: state.formGeo.lat,
+      geoLng: state.formGeo.lng,
+      geoRadius: state.formGeo.radius,
+      createdBy: existing ? existing.createdBy : state.currentUser,
+      updatedBy: state.currentUser,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (state.editingId) {
+      const idx = state.events.findIndex(ev => ev.id === state.editingId);
+      state.events[idx] = data;
+    } else {
+      state.events.push(data);
+    }
+
+    await saveEvents();
+    closeForm();
+    render();
+  });
+}
+
+function closeForm() {
+  document.getElementById("modal-root").innerHTML = "";
+  state.editingId = null;
+  state.formImages = [];
+  state.formTeam = [];
+  state.formGeo = { lat: null, lng: null, radius: 100 };
+}
+
+function enforceSession() {
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
+
+  if (!session) {
+    window.location.href = "index.html";
+    return false;
+  }
+  if (session.role !== "organizer") {
+    const roleTargets = { admin: "Admin.html", participant: "Student.html" };
+    window.location.href = roleTargets[session.role] || "index.html";
+    return false;
+  }
+  state.currentUser = session.name;
+  return true;
+}
+
+(async function init() {
+  if (!enforceSession()) return;
+  await loadEvents();
+  render();
+})();
+</script>
+</body>
+</html>

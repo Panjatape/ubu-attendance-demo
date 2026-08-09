@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการผู้ใช้งาน | UBU Attendance — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --amber:#B3792E;
+    --amber-100:#F6EBDA;
+    --red:#B3432E;
+    --red-100:#F7E7E3;
+    --purple:#5B4B8A;
+    --purple-100:#EBE7F4;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+  }
+
+  .app{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    min-height:100vh;
+  }
+
+  .sidebar{
+    background:var(--navy-900);
+    color:#fff;
+    padding:26px 18px;
+    display:flex;
+    flex-direction:column;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:34px;
+    padding:0 4px;
+  }
+  .brand-mark{
+    width:34px;height:34px;
+    border:1.5px solid var(--gold-500);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:13px;
+    color:var(--gold-500);
+    flex-shrink:0;
+  }
+  .brand-name{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:13.5px;
+    line-height:1.35;
+  }
+  .brand-name span{
+    display:block;
+    font-size:10px;
+    color:#8A93A8;
+    font-family:'Inter',sans-serif;
+  }
+  .nav-group-lbl{
+    font-size:10.5px;
+    color:#6E7893;
+    font-weight:600;
+    letter-spacing:.5px;
+    margin:18px 4px 8px;
+    text-transform:uppercase;
+  }
+  .nav-link{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:9px 12px;
+    border-radius:9px;
+    color:#B7BFCE;
+    font-size:13.5px;
+    font-weight:500;
+    text-decoration:none;
+    margin-bottom:2px;
+  }
+  .nav-link.active{
+    background:var(--navy-700);
+    color:#fff;
+  }
+  .nav-link.active svg{stroke:var(--gold-500);}
+  .nav-link{position:relative;}
+  .nav-badge{
+    margin-left:auto;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    font-size:10.5px;
+    font-weight:600;
+    padding:1px 7px;
+    border-radius:20px;
+  }
+  .sidebar-foot{
+    margin-top:auto;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .sidebar-foot .av{
+    width:32px;height:32px;
+    border-radius:50%;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    font-size:12px;
+    font-family:'Noto Serif Thai',serif;
+    flex-shrink:0;
+  }
+  .sidebar-foot .who{font-size:12.5px; font-weight:500;}
+  .sidebar-foot .role{font-size:10.5px; color:#8A93A8;}
+
+  .main{
+    padding:28px 36px 60px;
+    max-width:1220px;
+  }
+  .page-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .page-head h1{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:24px;
+    margin:0 0 5px;
+    color:var(--navy-900);
+  }
+  .page-head p{
+    margin:0;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .btn-primary{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:var(--navy-800);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:11px 16px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+  }
+
+  /* SYSTEM OVERVIEW STRIP */
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:12px;
+    margin-bottom:22px;
+  }
+  .stat-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:15px 16px;
+  }
+  .stat-card .top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:9px;
+  }
+  .stat-card .lbl{font-size:11.5px; color:var(--ink-soft); font-weight:500;}
+  .stat-card .ic{
+    width:24px;height:24px;
+    border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .stat-card .num{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:23px;
+    color:var(--navy-900);
+  }
+  .stat-card .sub{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+  .ic.blue{background:var(--paper-2);}
+  .ic.green{background:var(--green-100);}
+  .ic.amber{background:var(--amber-100);}
+  .ic.purple{background:var(--purple-100);}
+  .ic.red{background:var(--red-100);}
+
+  /* TABS */
+  .tabbar{
+    display:flex;
+    gap:4px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:4px;
+    margin-bottom:18px;
+    width:fit-content;
+  }
+  .tab{
+    padding:8px 16px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .tab.active{background:var(--navy-800); color:#fff;}
+
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .panel-head h3{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:15px;
+    margin:0;
+    color:var(--navy-900);
+  }
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--paper-2);
+    border-radius:9px;
+    padding:8px 12px;
+    width:230px;
+  }
+  .search-box input{
+    border:none;
+    background:transparent;
+    outline:none;
+    font-family:inherit;
+    font-size:12.5px;
+    width:100%;
+    color:var(--ink);
+  }
+  .filter-row{display:flex; gap:8px; align-items:center;}
+  .role-filter{
+    display:flex;
+    gap:6px;
+  }
+  .chip{
+    font-size:11.5px;
+    font-weight:500;
+    padding:6px 12px;
+    border-radius:999px;
+    background:var(--paper-2);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .chip.active{background:var(--navy-800); color:#fff;}
+
+  table{width:100%; border-collapse:collapse;}
+  th{
+    text-align:left;
+    font-size:11px;
+    color:var(--ink-soft);
+    font-weight:500;
+    padding:0 10px 10px;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    border-bottom:1px solid var(--paper-2);
+    padding-bottom:10px;
+  }
+  td{
+    padding:12px 10px;
+    font-size:13px;
+    border-top:1px solid var(--paper-2);
+    vertical-align:middle;
+  }
+  .person{display:flex; align-items:center; gap:9px;}
+  .p-av{
+    width:30px;height:30px;
+    border-radius:50%;
+    background:var(--paper-2);
+    color:var(--navy-700);
+    font-size:11px;
+    font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    flex-shrink:0;
+  }
+  .p-name{font-weight:500;}
+  .p-email{font-size:11.5px; color:var(--ink-soft);}
+  .mono{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-soft);}
+
+  .role-badge{
+    font-size:11px;
+    font-weight:500;
+    padding:4px 10px;
+    border-radius:999px;
+    display:inline-block;
+  }
+  .role-badge.participant{background:var(--paper-2); color:var(--navy-700);}
+  .role-badge.organizer{background:var(--purple-100); color:var(--purple);}
+  .role-badge.organizer.teacher-origin::after{content:" · อาจารย์"; font-weight:400; opacity:.75;}
+  .role-badge.organizer.student-origin::after{content:" · นักศึกษา"; font-weight:400; opacity:.75;}
+  .role-badge.admin{background:var(--gold-100); color:#8A6D0B;}
+
+  /* REQUEST QUEUE */
+  .req-card{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    padding:14px 4px;
+    border-top:1px solid var(--paper-2);
+  }
+  .req-card:first-child{border-top:none;}
+  .req-left{display:flex; gap:12px; flex:1;}
+  .req-body .p-name{margin-bottom:2px;}
+  .req-body .req-meta{font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
+  .req-body .req-reason{
+    font-size:12.5px;
+    color:var(--ink);
+    background:var(--paper-2);
+    padding:8px 10px;
+    border-radius:8px;
+    line-height:1.55;
+    max-width:440px;
+  }
+  .req-actions{display:flex; gap:8px; flex-shrink:0;}
+  .btn-approve{
+    display:flex; align-items:center; gap:5px;
+    background:var(--green); color:#fff; border:none;
+    border-radius:8px; padding:7px 13px;
+    font-family:inherit; font-size:12.5px; font-weight:500; cursor:pointer;
+  }
+  .btn-decline{
+    display:flex; align-items:center; gap:5px;
+    background:#fff; color:var(--red); border:1px solid var(--red-100);
+    border-radius:8px; padding:7px 13px;
+    font-family:inherit; font-size:12.5px; font-weight:500; cursor:pointer;
+  }
+  .empty-state{
+    text-align:center;
+    padding:36px 20px;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+
+  /* CONFIG PANEL */
+  .config-section{margin-bottom:24px;}
+  .config-section:last-child{margin-bottom:0;}
+  .config-section h4{
+    font-family:'Noto Serif Thai',serif;
+    font-size:14px;
+    font-weight:600;
+    color:var(--navy-900);
+    margin:0 0 4px;
+  }
+  .config-section .desc{font-size:12.5px; color:var(--ink-soft); margin:0 0 14px; line-height:1.6;}
+  .config-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 0;
+    border-top:1px solid var(--paper-2);
+    gap:16px;
+  }
+  .config-row:first-of-type{border-top:none;}
+  .config-row .c-label{font-size:13px; font-weight:500; color:var(--ink);}
+  .config-row .c-hint{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .config-input{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+  .config-input input[type="number"]{
+    width:72px;
+    border:1.3px solid var(--line);
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:inherit;
+    font-size:13.5px;
+    text-align:center;
+    outline:none;
+  }
+  .config-input input[type="number"]:focus{border-color:var(--navy-700);}
+  .config-input .unit{font-size:12.5px; color:var(--ink-soft);}
+  .toggle{
+    position:relative;
+    width:38px; height:22px;
+    background:var(--line);
+    border-radius:20px;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:background .18s ease;
+  }
+  .toggle.on{background:var(--green);}
+  .toggle .knob{
+    position:absolute;
+    top:2px; left:2px;
+    width:18px; height:18px;
+    background:#fff;
+    border-radius:50%;
+    transition:transform .18s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,0.15);
+  }
+  .toggle.on .knob{transform:translateX(16px);}
+  .radius-pill-group{ display:flex; gap:6px; }
+  .radius-pill-btn{
+    padding:7px 13px;
+    border-radius:8px;
+    border:1.3px solid var(--line);
+    background:#fff;
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    font-size:12.5px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .radius-pill-btn.active{
+    background:var(--navy-800);
+    border-color:var(--navy-800);
+    color:#fff;
+    font-weight:500;
+  }
+  .save-bar{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:20px;
+    padding-top:18px;
+    border-top:1px solid var(--paper-2);
+  }
+  .btn-secondary{
+    background:#fff; color:var(--navy-800);
+    border:1.3px solid var(--line);
+    border-radius:10px;
+    padding:10px 16px;
+    font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;
+  }
+  .save-toast{
+    display:none;
+    align-items:center; gap:8px;
+    background:var(--green-100); color:#1E5C39;
+    border-radius:8px; padding:9px 13px;
+    font-size:12.5px; font-weight:500;
+    margin-top:14px;
+  }
+  .save-toast.show{display:flex;}
+
+  .status-dot{display:flex; align-items:center; gap:6px; font-size:12.5px;}
+  .status-dot .d{width:7px; height:7px; border-radius:50%;}
+  .status-dot.on .d{background:var(--green);}
+  .status-dot.off .d{background:var(--ink-soft);}
+
+  .row-actions{display:flex; gap:6px;}
+  .icon-btn{
+    width:28px;height:28px;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+
+  /* Permission matrix */
+  .perm-table th, .perm-table td{text-align:center;}
+  .perm-table th:first-child, .perm-table td:first-child{text-align:left;}
+  .perm-check{
+    width:20px;height:20px;
+    border-radius:5px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto;
+  }
+  .perm-check.yes{background:var(--green-100);}
+  .perm-check.no{background:var(--paper-2);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">มบ</div>
+      <div class="brand-name">ระบบเช็คชื่อกิจกรรม<span>ADMIN PANEL</span></div>
+    </div>
+
+    <div class="nav-group-lbl">งานหลัก</div>
+    <a class="nav-link active" href="#" data-page="users">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      ผู้ใช้งาน &amp; สิทธิ์
+    </a>
+    <a class="nav-link" href="#" data-page="requests">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      คำขอสิทธิ์ผู้จัด
+      <span class="nav-badge" id="nav-req-badge">2</span>
+    </a>
+    <a class="nav-link" href="#" data-page="overview">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg>
+      ภาพรวมระบบ
+    </a>
+    <a class="nav-link" href="#" data-page="events">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      กิจกรรมทั้งหมด
+    </a>
+    <a class="nav-link" href="Reports.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg>
+      รายงานผลกิจกรรม
+    </a>
+    <a class="nav-link" href="#" data-page="config">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09c0 .69.4 1.3 1 1.51.63.24 1.37.1 1.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06c-.43.45-.57 1.19-.33 1.82.21.6.82 1 1.51 1H21a2 2 0 010 4h-.09c-.69 0-1.3.4-1.51 1z"/></svg>
+      ตั้งค่าระบบ
+    </a>
+
+    <div class="sidebar-foot">
+      <div class="av" id="admin-avatar">ผด</div>
+      <div>
+        <div class="who" id="admin-name">ผู้ดูแลระบบ</div>
+        <div class="role">IT Admin · สำนักคอมพิวเตอร์</div>
+      </div>
+      <button id="admin-logout-btn" title="ออกจากระบบ" style="margin-left:auto; background:none; border:none; cursor:pointer; padding:6px; border-radius:6px; color:#8A93A8;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="page-head">
+      <div>
+        <h1>ผู้ใช้งาน &amp; สิทธิ์การเข้าถึง</h1>
+        <p>จัดการบัญชีผู้ใช้ทั้งหมดในระบบและกำหนดสิทธิ์ตามบทบาท</p>
+      </div>
+      <button class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        เพิ่มผู้ใช้งาน
+      </button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="top">
+          <span class="lbl">ผู้ใช้ทั้งหมด</span>
+          <span class="ic blue"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#26385E" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+        </div>
+        <div class="num">3,482</div>
+        <div class="sub">บัญชี @ubu.ac.th</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <span class="lbl">ผู้เข้าร่วม</span>
+          <span class="ic blue"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#26385E" stroke-width="2"><path d="M22 10L12 4 2 10l10 6 10-6z"/></svg></span>
+        </div>
+        <div class="num">3,157</div>
+        <div class="sub">90.7% ของทั้งหมด</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <span class="lbl">ผู้จัดกิจกรรม</span>
+          <span class="ic purple"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B4B8A" stroke-width="2"><path d="M12 21s-7-5.3-7-11a7 7 0 0114 0c0 5.7-7 11-7 11z"/></svg></span>
+        </div>
+        <div class="num">296</div>
+        <div class="sub">248 อาจารย์ · 48 นักศึกษาที่ได้รับสิทธิ์</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <span class="lbl">ผู้ดูแลระบบ</span>
+          <span class="ic amber"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A5D22" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></span>
+        </div>
+        <div class="num">6</div>
+        <div class="sub">สำนักคอมพิวเตอร์ &amp; ทะเบียน</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <span class="lbl">คำขอรออนุมัติ</span>
+          <span class="ic red"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7A2E1E" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+        </div>
+        <div class="num">2</div>
+        <div class="sub">ต้องตรวจสอบ</div>
+      </div>
+    </div>
+
+    <div id="page-users" class="page-section">
+
+    <div class="tabbar">
+      <div class="tab active">รายชื่อผู้ใช้</div>
+      <div class="tab">ตารางสิทธิ์ (Role Matrix)</div>
+      <div class="tab">ประวัติการเข้าใช้งาน</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>รายชื่อผู้ใช้งานทั้งหมด</h3>
+        <div class="filter-row">
+          <div class="role-filter">
+            <span class="chip active">ทั้งหมด</span>
+            <span class="chip">ผู้เข้าร่วม</span>
+            <span class="chip">ผู้จัดกิจกรรม</span>
+            <span class="chip">ผู้ดูแลระบบ</span>
+          </div>
+          <div class="search-box">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" placeholder="ค้นหาชื่อ หรืออีเมล">
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>ผู้ใช้งาน</th><th>อีเมล</th><th>บทบาท</th><th>เข้าใช้งานล่าสุด</th><th>สถานะ</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="person"><span class="p-av">ณช</span><div class="p-name">ณัฐชนก ใจดี</div></div></td>
+            <td class="mono">6520123456@ubu.ac.th</td>
+            <td><span class="role-badge participant">ผู้เข้าร่วม</span></td>
+            <td class="mono">17 ก.ค. 2569 09:04</td>
+            <td><div class="status-dot on"><span class="d"></span>ใช้งานอยู่</div></td>
+            <td>
+              <div class="row-actions">
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="person"><span class="p-av">สม</span><div class="p-name">อ.สมชาย วงศ์ธรรม</div></div></td>
+            <td class="mono">somchai.w@ubu.ac.th</td>
+            <td><span class="role-badge organizer teacher-origin">ผู้จัดกิจกรรม</span></td>
+            <td class="mono">17 ก.ค. 2569 08:41</td>
+            <td><div class="status-dot on"><span class="d"></span>ใช้งานอยู่</div></td>
+            <td>
+              <div class="row-actions">
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="person"><span class="p-av">อร</span><div class="p-name">อรอุมา จันทร์เพ็ญ</div></div></td>
+            <td class="mono">oruma.c@ubu.ac.th</td>
+            <td><span class="role-badge admin">ผู้ดูแลระบบ</span></td>
+            <td class="mono">16 ก.ค. 2569 17:20</td>
+            <td><div class="status-dot off"><span class="d"></span>ออฟไลน์</div></td>
+            <td>
+              <div class="row-actions">
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="person"><span class="p-av">วิ</span><div class="p-name">อ.วิภา สุขสันต์</div></div></td>
+            <td class="mono">wipa.s@ubu.ac.th</td>
+            <td><span class="role-badge organizer teacher-origin">ผู้จัดกิจกรรม</span></td>
+            <td class="mono">15 ก.ค. 2569 14:02</td>
+            <td><div class="status-dot off"><span class="d"></span>ออฟไลน์</div></td>
+            <td>
+              <div class="row-actions">
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="person"><span class="p-av">ปว</span><div class="p-name">ปวีณา สายทอง</div></div></td>
+            <td class="mono">6520123478@ubu.ac.th</td>
+            <td><span class="role-badge organizer student-origin">ผู้จัดกิจกรรม</span></td>
+            <td class="mono">17 ก.ค. 2569 09:04</td>
+            <td><div class="status-dot on"><span class="d"></span>ใช้งานอยู่</div></td>
+            <td>
+              <div class="row-actions">
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+                <div class="icon-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ROLE PERMISSION MATRIX PREVIEW -->
+    <div class="panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <h3>ตารางสิทธิ์การเข้าถึงตามบทบาท</h3>
+      </div>
+      <table class="perm-table">
+        <thead>
+          <tr>
+            <th>สิทธิ์การใช้งาน</th>
+            <th>ผู้เข้าร่วม</th>
+            <th>ผู้จัดกิจกรรม</th>
+            <th>ผู้ดูแลระบบ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>สแกน QR เช็คชื่อ</td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check no"></span></td>
+          </tr>
+          <tr>
+            <td>สร้างกิจกรรม / QR Code</td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+          </tr>
+          <tr>
+            <td>สร้างแบบประเมิน / กำหนด KPI</td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+          </tr>
+          <tr>
+            <td>ดูรายงานการเข้าร่วม</td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+          </tr>
+          <tr>
+            <td>อนุมัติคำขอสิทธิ์ผู้จัด</td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+          </tr>
+          <tr>
+            <td>จัดการบัญชีผู้ใช้ / ตั้งค่าระบบ</td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check no"></span></td>
+            <td><span class="perm-check yes"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    </div><!-- /page-users -->
+
+    <!-- PAGE: PENDING ORGANIZER REQUESTS -->
+    <div id="page-requests" class="page-section" style="display:none;">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>คำขอสิทธิ์ผู้จัดกิจกรรม</h3>
+          <span class="chip active">รอดำเนินการ (2)</span>
+        </div>
+
+        <div class="req-card">
+          <div class="req-left">
+            <span class="p-av">ธน</span>
+            <div class="req-body">
+              <div class="p-name">ธนภัทร ศรีสุข</div>
+              <div class="req-meta">6420145522@ubu.ac.th &middot; นักศึกษาชั้นปีที่ 3 &middot; ส่งคำขอ 18 ก.ค. 2569</div>
+              <div class="req-reason">เป็นประธานชมรมดนตรีสากล ต้องการจัดกิจกรรมประกวดวงดนตรีประจำปีและออก QR เช็คชื่อผู้เข้าร่วมด้วยตนเอง</div>
+            </div>
+          </div>
+          <div class="req-actions">
+            <button class="btn-decline" data-req="1">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              ปฏิเสธ
+            </button>
+            <button class="btn-approve" data-req="1">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+              อนุมัติ
+            </button>
+          </div>
+        </div>
+
+        <div class="req-card">
+          <div class="req-left">
+            <span class="p-av">กม</span>
+            <div class="req-body">
+              <div class="p-name">กมลชนก อินทร์แก้ว</div>
+              <div class="req-meta">6520133381@ubu.ac.th &middot; นักศึกษาชั้นปีที่ 2 &middot; ส่งคำขอ 19 ก.ค. 2569</div>
+              <div class="req-reason">ได้รับมอบหมายจากคณะให้ดูแลโครงการจิตอาสาประจำภาคเรียน ต้องการสิทธิ์สร้างกิจกรรมและติดตาม KPI ผู้เข้าร่วม</div>
+            </div>
+          </div>
+          <div class="req-actions">
+            <button class="btn-decline" data-req="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              ปฏิเสธ
+            </button>
+            <button class="btn-approve" data-req="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+              อนุมัติ
+            </button>
+          </div>
+        </div>
+
+        <div id="requests-empty" class="empty-state" style="display:none;">
+          ไม่มีคำขอสิทธิ์ที่รอดำเนินการในขณะนี้
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SYSTEM CONFIG -->
+    <div id="page-config" class="page-section" style="display:none;">
+      <div class="panel">
+        <div class="config-section">
+          <h4>รอบเวลา QR Code เช็คชื่อ</h4>
+          <p class="desc">กำหนดความถี่ในการสร้าง QR Code ใหม่โดยอัตโนมัติระหว่างกิจกรรม เพื่อป้องกันการแชร์ภาพหน้าจอเช็คชื่อแทนกัน</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">รอบ auto-refresh QR Code</div>
+              <div class="c-hint">ค่าแนะนำ 10 นาที เหมาะกับกิจกรรมทั่วไป</div>
+            </div>
+            <div class="config-input">
+              <input type="number" id="cfg-qr-refresh" value="10" min="1" max="120">
+              <span class="unit">นาที</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>รัศมี Geo-fencing เริ่มต้น</h4>
+          <p class="desc">ค่ารัศมีเริ่มต้นที่ระบบจะเลือกไว้ล่วงหน้าให้ทุกครั้งที่มีการสร้างกิจกรรมใหม่ ผู้จัดกิจกรรมยังสามารถปรับเปลี่ยนเป็นค่าอื่นได้เองต่อกิจกรรม</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">รัศมีเริ่มต้น (ผู้จัดปรับได้ภายหลัง)</div>
+              <div class="c-hint">ใช้กับกิจกรรมที่สร้างใหม่เท่านั้น ไม่มีผลย้อนหลังกับกิจกรรมที่มีอยู่แล้ว</div>
+            </div>
+            <div class="config-input">
+              <div class="radius-pill-group" id="cfg-gps-radius-group">
+                <button type="button" class="radius-pill-btn" data-radius="50">50 ม.</button>
+                <button type="button" class="radius-pill-btn active" data-radius="100">100 ม.</button>
+                <button type="button" class="radius-pill-btn" data-radius="200">200 ม.</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>รอบการเช็คชื่อซ้ำ</h4>
+          <p class="desc">ระยะเวลาขั้นต่ำที่ต้องรอก่อนสแกนซ้ำได้ในกิจกรรมเดียวกัน (รองรับ check-in และ check-out)</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">รองรับเช็คชื่อได้หลายครั้งต่อกิจกรรม</div>
+              <div class="c-hint">เปิดไว้สำหรับกิจกรรมที่มีทั้ง check-in และ check-out</div>
+            </div>
+            <div class="config-input">
+              <div class="toggle on" id="cfg-multi-scan"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="c-label">ระยะห่างขั้นต่ำระหว่างการสแกนซ้ำ</div>
+              <div class="c-hint">กันการสแกนซ้ำถี่เกินไปโดยไม่ตั้งใจ</div>
+            </div>
+            <div class="config-input">
+              <input type="number" id="cfg-scan-cooldown" value="5" min="0" max="60">
+              <span class="unit">นาที</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>เกณฑ์การนับว่า "เข้าร่วมสำเร็จ"</h4>
+          <p class="desc">กำหนดวิธีคำนวณว่านักศึกษาเข้าร่วมกิจกรรมสำเร็จหรือไม่ ใช้เป็นค่าเริ่มต้นสำหรับกิจกรรมใหม่ทั้งหมด (ผู้จัดกิจกรรมสามารถปรับค่าต่อกิจกรรมได้ในภายหลัง)</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">บังคับสแกนเข้า + สแกนออก</div>
+              <div class="c-hint">ต้องสแกนทั้งตอนเข้าและตอนออกจากกิจกรรม จึงจะคำนวณชั่วโมงที่อยู่จริงได้ (หากปิด ระบบจะนับจากสแกนเข้าเพียงครั้งเดียว)</div>
+            </div>
+            <div class="config-input">
+              <div class="toggle on" id="cfg-require-checkout"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="c-label">เปอร์เซ็นต์เวลาขั้นต่ำที่ต้องอยู่จริง</div>
+              <div class="c-hint">คำนวณจาก (เวลาที่อยู่จริง ÷ ระยะเวลากิจกรรมทั้งหมด) × 100 ต้องถึงเกณฑ์นี้จึงนับว่า "เข้าร่วมสำเร็จ"</div>
+            </div>
+            <div class="config-input">
+              <input type="number" id="cfg-min-attend-percent" value="80" min="1" max="100">
+              <span class="unit">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>คำขอสิทธิ์ผู้จัดกิจกรรม</h4>
+          <p class="desc">ตั้งค่าเกี่ยวกับการอนุมัติสิทธิ์ผู้จัดกิจกรรมสำหรับนักศึกษา</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">อาจารย์ได้รับสิทธิ์ผู้จัดอัตโนมัติ</div>
+              <div class="c-hint">บัญชีที่ตรวจพบว่าเป็นอาจารย์จะได้สิทธิ์ทันทีโดยไม่ต้องขออนุมัติ</div>
+            </div>
+            <div class="config-input">
+              <div class="toggle on" id="cfg-auto-teacher"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="c-label">แจ้งเตือนอีเมลเมื่อมีคำขอใหม่</div>
+              <div class="c-hint">ส่งอีเมลแจ้งผู้ดูแลระบบเมื่อมีนักศึกษาส่งคำขอสิทธิ์ผู้จัด</div>
+            </div>
+            <div class="config-input">
+              <div class="toggle on" id="cfg-notify-request"><div class="knob"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>แบบประเมินผลกิจกรรม (ค่าเริ่มต้น)</h4>
+          <p class="desc">ข้อคำถามเริ่มต้นที่จะแนบไปกับทุกกิจกรรมที่สร้างใหม่ ผู้จัดกิจกรรมสามารถปรับแก้เพิ่มเติมได้ต่อกิจกรรม</p>
+          <div class="config-row">
+            <div>
+              <div class="c-label">เปิดใช้แบบประเมินอัตโนมัติทุกกิจกรรม</div>
+              <div class="c-hint">แนบแบบสอบถามท้ายกิจกรรมให้ผู้เข้าร่วมประเมินหลังเช็คชื่อออก</div>
+            </div>
+            <div class="config-input">
+              <div class="toggle on" id="cfg-auto-survey"><div class="knob"></div></div>
+            </div>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="c-label">คำถามค่าเริ่มต้น</div>
+              <div class="c-hint">จำนวนผู้เข้าร่วม (นับอัตโนมัติ) &middot; ระดับความพึงพอใจ (คะแนน 1–5) &middot; ความคิดเห็นทั่วไป (ข้อความอิสระ)</div>
+            </div>
+            <button class="btn-secondary" id="cfg-edit-survey">แก้ไขคำถาม</button>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <button class="btn-secondary" id="cfg-reset">คืนค่าเริ่มต้น</button>
+          <button class="btn-primary" id="cfg-save" style="width:auto;">บันทึกการตั้งค่า</button>
+        </div>
+        <div class="save-toast" id="cfg-save-toast">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+          บันทึกการตั้งค่าเรียบร้อยแล้ว
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: OVERVIEW / EVENTS placeholders -->
+    <div id="page-overview" class="page-section" style="display:none;">
+      <div class="panel"><div class="empty-state">หน้าภาพรวมระบบ (สถิติการเช็คชื่อ แนวโน้มผู้เข้าร่วม) อยู่ระหว่างการพัฒนา</div></div>
+    </div>
+    <div id="page-events" class="page-section" style="display:none;">
+      <div class="panel"><div class="empty-state">หน้ารายการกิจกรรมทั้งหมดสำหรับผู้ดูแลระบบ อยู่ระหว่างการพัฒนา</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Sidebar navigation between admin pages
+  const navLinks = document.querySelectorAll('.nav-link[data-page]');
+  const pages = document.querySelectorAll('.page-section');
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const target = link.dataset.page;
+      pages.forEach(p => {
+        p.style.display = (p.id === 'page-' + target) ? '' : 'none';
+      });
+    });
+  });
+
+  // Approve / decline organizer requests
+  document.querySelectorAll('.btn-approve, .btn-decline').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.req-card');
+      const approved = btn.classList.contains('btn-approve');
+      card.style.opacity = '0';
+      card.style.transition = 'opacity .25s ease';
+      setTimeout(() => {
+        card.remove();
+        const remaining = document.querySelectorAll('.req-card').length;
+        const badge = document.getElementById('nav-req-badge');
+        if (badge) {
+          if (remaining === 0) { badge.style.display = 'none'; } else { badge.textContent = remaining; }
+        }
+        if (remaining === 0) {
+          document.getElementById('requests-empty').style.display = '';
+        }
+      }, 250);
+    });
+  });
+
+  // Toggle switches
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+
+  // GPS default radius pill selector
+  document.querySelectorAll('#cfg-gps-radius-group .radius-pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#cfg-gps-radius-group .radius-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Save config
+  document.getElementById('cfg-save').addEventListener('click', async () => {
+    const activePill = document.querySelector('#cfg-gps-radius-group .radius-pill-btn.active');
+    const settings = {
+      qrRefreshMinutes: Number(document.getElementById('cfg-qr-refresh').value),
+      defaultGeoRadius: activePill ? Number(activePill.dataset.radius) : 100,
+      multiScanEnabled: document.getElementById('cfg-multi-scan').classList.contains('on'),
+      scanCooldownMinutes: Number(document.getElementById('cfg-scan-cooldown').value),
+      requireCheckout: document.getElementById('cfg-require-checkout').classList.contains('on'),
+      minAttendPercent: Number(document.getElementById('cfg-min-attend-percent').value),
+      autoTeacherOrganizer: document.getElementById('cfg-auto-teacher').classList.contains('on'),
+      notifyOnRequest: document.getElementById('cfg-notify-request').classList.contains('on'),
+      autoSurveyEnabled: document.getElementById('cfg-auto-survey').classList.contains('on')
+    };
+    try {
+      await window.storage.set('system-config', JSON.stringify(settings), true);
+    } catch (e) {
+      console.error('บันทึกการตั้งค่าไม่สำเร็จ', e);
+    }
+    const toast = document.getElementById('cfg-save-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  });
+  document.getElementById('cfg-reset').addEventListener('click', () => {
+    document.getElementById('cfg-qr-refresh').value = 10;
+    document.getElementById('cfg-scan-cooldown').value = 5;
+    document.getElementById('cfg-min-attend-percent').value = 80;
+    ['cfg-multi-scan','cfg-require-checkout','cfg-auto-teacher','cfg-notify-request','cfg-auto-survey'].forEach(id => {
+      document.getElementById(id).classList.add('on');
+    });
+    document.querySelectorAll('#cfg-gps-radius-group .radius-pill-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.radius === '100');
+    });
+  });
+  document.getElementById('cfg-edit-survey').addEventListener('click', () => {
+    alert('เปิดตัวแก้ไขคำถามแบบประเมินค่าเริ่มต้น (ต่อยอดจากหน้าสร้างกิจกรรมของผู้จัด)');
+  });
+
+  // Load previously saved settings, if any
+  (async function loadSavedConfig() {
+    try {
+      const res = await window.storage.get('system-config', true);
+      if (!res) return;
+      const settings = JSON.parse(res.value);
+      if (settings.qrRefreshMinutes) document.getElementById('cfg-qr-refresh').value = settings.qrRefreshMinutes;
+      if (settings.scanCooldownMinutes !== undefined) document.getElementById('cfg-scan-cooldown').value = settings.scanCooldownMinutes;
+      if (settings.minAttendPercent !== undefined) document.getElementById('cfg-min-attend-percent').value = settings.minAttendPercent;
+      if (settings.defaultGeoRadius) {
+        document.querySelectorAll('#cfg-gps-radius-group .radius-pill-btn').forEach(b => {
+          b.classList.toggle('active', Number(b.dataset.radius) === settings.defaultGeoRadius);
+        });
+      }
+      const toggleMap = { multiScanEnabled: 'cfg-multi-scan', requireCheckout: 'cfg-require-checkout', autoTeacherOrganizer: 'cfg-auto-teacher', notifyOnRequest: 'cfg-notify-request', autoSurveyEnabled: 'cfg-auto-survey' };
+      Object.keys(toggleMap).forEach(key => {
+        if (settings[key] !== undefined) {
+          document.getElementById(toggleMap[key]).classList.toggle('on', settings[key]);
+        }
+      });
+    } catch (e) {
+      console.error('โหลดการตั้งค่าไม่สำเร็จ', e);
+    }
+  })();
+
+  // Session guard: this page is for admins only.
+  (function enforceSession() {
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
+
+    if (!session) {
+      window.location.href = "index.html";
+      return;
+    }
+    if (session.role !== "admin") {
+      const roleTargets = { organizer: "Staff.html", participant: "Student.html" };
+      window.location.href = roleTargets[session.role] || "index.html";
+      return;
+    }
+
+    const nameEl = document.getElementById("admin-name");
+    const avEl = document.getElementById("admin-avatar");
+    if (nameEl) nameEl.textContent = session.name;
+    if (avEl) avEl.textContent = session.name.replace(/^(อ\.|นักศึกษา\s?)/, "").trim().slice(0, 2) || "ผด";
+  })();
+
+  document.getElementById("admin-logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+</script>
+
+</body>
+</html>

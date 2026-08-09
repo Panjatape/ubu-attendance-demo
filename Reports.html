@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานผลการจัดกิจกรรม | UBU Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --amber:#B3792E;
+    --amber-100:#F6EBDA;
+    --red:#B3432E;
+    --red-100:#F7E7E3;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  /* NAVBAR */
+  .navbar{
+    background:var(--navy-900);
+    color:#fff;
+    padding:0 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:64px;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .nav-left{display:flex; align-items:center; gap:36px;}
+  .nav-brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;}
+  .brand-mark{
+    width:32px;height:32px;
+    border:1.5px solid var(--gold-500);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--gold-500);
+    flex-shrink:0;
+  }
+  .nav-brand-name{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:14px;
+    line-height:1.2;
+  }
+  .nav-brand-name span{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:9.5px;
+    color:#8A93A8;
+    letter-spacing:.4px;
+  }
+  .nav-links{display:flex; gap:6px;}
+  .nav-links a{
+    display:flex; align-items:center; gap:7px;
+    padding:8px 14px;
+    border-radius:8px;
+    color:#B7BFCE;
+    font-size:13.5px;
+    font-weight:500;
+    text-decoration:none;
+  }
+  .nav-links a.active{background:var(--navy-700); color:#fff;}
+  .nav-links a.active svg{stroke:var(--gold-500);}
+  .nav-links a svg{flex-shrink:0;}
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .logout-link{
+    display:flex; align-items:center; gap:5px;
+    color:#B7BFCE; font-size:12.5px; text-decoration:none;
+    background:none; border:none; cursor:pointer; font-family:inherit; padding:0;
+  }
+  .logout-link:hover{ color:#fff; }
+  .nav-avatar{
+    width:32px;height:32px;
+    border-radius:50%;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    font-size:12px;
+    font-family:'Noto Serif Thai',serif;
+    flex-shrink:0;
+  }
+
+  /* PAGE HEADER */
+  .page-header{
+    background:var(--navy-800);
+    color:#fff;
+    padding:32px 32px 24px;
+  }
+  .page-header-inner{ max-width:1200px; margin:0 auto; }
+  .page-header h1{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:24px;
+    margin:0 0 4px;
+  }
+  .page-header p{ margin:0; font-size:13px; color:#9AA6BC; }
+  .scope-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:500;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    padding:4px 11px;
+    border-radius:999px;
+    margin-top:10px;
+  }
+
+  /* CONTENT */
+  .content{ max-width:1200px; margin:0 auto; padding:24px 32px 70px; }
+
+  /* FILTER BAR */
+  .filter-bar{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:flex-end;
+    margin-bottom:22px;
+  }
+  .filter-field{ display:flex; flex-direction:column; gap:5px; min-width:150px; flex:1; }
+  .filter-field label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.3px; }
+  .filter-field select{
+    padding:9px 11px;
+    border:1.3px solid var(--line);
+    border-radius:8px;
+    font-family:inherit;
+    font-size:13.5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .filter-field select:focus{ outline:none; border-color:var(--navy-700); }
+  .filter-reset{
+    flex-shrink:0;
+    background:none;
+    border:1.3px solid var(--line);
+    border-radius:8px;
+    padding:9px 14px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    cursor:pointer;
+    height:37px;
+  }
+  .filter-reset:hover{ border-color:var(--navy-600); color:var(--navy-800); }
+
+  /* SUMMARY KPI CARDS */
+  .kpi-summary-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .kpi-summary-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .kpi-summary-card .lbl{ font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
+  .kpi-summary-card .val{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--navy-900);
+  }
+  .kpi-summary-card .val.gold{ color:var(--gold-600); }
+  .kpi-summary-card .sub{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; }
+
+  /* SECTION HEAD */
+  .section-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .section-head h3{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:16.5px;
+    margin:0;
+    color:var(--navy-900);
+  }
+  .result-count{ font-size:12.5px; color:var(--ink-soft); }
+
+  /* CHART */
+  .chart-panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:28px;
+  }
+  .chart-canvas-wrap{ position:relative; width:100%; }
+
+  /* REPORT TABLE */
+  .report-table-wrap{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:28px;
+  }
+  table.report-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .report-table thead th{
+    text-align:left;
+    padding:11px 14px;
+    background:var(--paper-2);
+    color:var(--ink-soft);
+    font-weight:600;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    white-space:nowrap;
+    border-bottom:1px solid var(--line);
+  }
+  .report-table tbody td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--paper-2);
+    vertical-align:middle;
+  }
+  .report-table tbody tr:last-child td{ border-bottom:none; }
+  .report-table tbody tr:hover{ background:var(--paper-2); }
+  .ev-title{ font-weight:500; color:var(--ink); }
+  .ev-tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:500;
+    padding:2px 9px;
+    border-radius:20px;
+    background:var(--paper-2);
+    color:var(--navy-700);
+  }
+  .kpi-mini{ display:flex; gap:6px; align-items:center; font-size:12.5px; }
+  .kpi-mini .hit{ color:#1E5C39; font-weight:600; }
+  .kpi-mini .miss{ color:#7A2E1E; font-weight:600; }
+  .kpi-mini .pending{ color:var(--ink-soft); }
+  .view-btn{
+    font-size:12px;
+    font-weight:500;
+    color:var(--navy-700);
+    background:none;
+    border:1.3px solid var(--line);
+    border-radius:7px;
+    padding:5px 11px;
+    cursor:pointer;
+  }
+  .view-btn:hover{ background:var(--paper-2); border-color:var(--navy-600); }
+
+  .empty-report{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+
+  /* DETAIL MODAL */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(19,32,56,0.55);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 16px;
+    overflow-y:auto;
+    z-index:100;
+  }
+  .modal{
+    background:#fff;
+    border-radius:16px;
+    padding:26px 28px;
+    width:100%;
+    max-width:560px;
+  }
+  .modal-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; gap:12px; }
+  .modal-head h2{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 6px;
+    color:var(--navy-900);
+  }
+  .modal-head .modal-sub{ font-size:12.5px; color:var(--ink-soft); }
+  .close-x{ border:none; background:none; font-size:20px; cursor:pointer; color:var(--ink-soft); flex-shrink:0; }
+
+  .detail-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+  .detail-tag{
+    font-size:11.5px;
+    font-weight:500;
+    padding:4px 10px;
+    border-radius:20px;
+    background:var(--paper-2);
+    color:var(--navy-700);
+  }
+
+  .kpi-detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+  .kpi-detail-box{ background:var(--paper-2); border-radius:10px; padding:14px; }
+  .kpi-detail-box .kd-label{ font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
+  .kpi-detail-box .kd-row{ display:flex; align-items:baseline; gap:8px; }
+  .kpi-detail-box .kd-actual{ font-family:'Noto Serif Thai',serif; font-weight:600; font-size:22px; color:var(--navy-900); }
+  .kpi-detail-box .kd-target{ font-size:13px; color:var(--ink-soft); }
+  .kpi-detail-box .kd-status{ font-size:11px; font-weight:600; margin-top:6px; }
+  .kpi-detail-box .kd-status.hit{ color:#1E5C39; }
+  .kpi-detail-box .kd-status.miss{ color:#7A2E1E; }
+  .kpi-detail-box .kd-status.pending{ color:var(--ink-soft); }
+
+  .detail-meta-row{ font-size:13px; color:var(--ink-soft); margin-bottom:6px; display:flex; gap:6px; }
+  .detail-meta-row b{ color:var(--ink); font-weight:500; }
+
+  @media (max-width:640px){
+    .kpi-detail-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a class="nav-brand" href="#" id="brandLink">
+      <div class="brand-mark">มบ</div>
+      <div class="nav-brand-name">ระบบเช็คชื่อกิจกรรม<span>UBU ATTENDANCE</span></div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <!-- populated by session role -->
+    </div>
+  </div>
+  <div class="nav-right">
+    <button type="button" class="logout-link" id="logout-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      ออกจากระบบ
+    </button>
+    <div class="nav-avatar" id="navAvatar">?</div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1>รายงานผลการจัดกิจกรรม</h1>
+    <p>สรุปผลกิจกรรมและ KPI แยกตามปีการศึกษา หลักสูตร ภาคเรียน และประเภทกิจกรรม</p>
+    <div class="scope-tag" id="scopeTag">กำลังโหลด...</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label for="f-year">ปีการศึกษา</label>
+      <select id="f-year"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="f-faculty">หลักสูตร / คณะ</label>
+      <select id="f-faculty"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="f-semester">ภาคเรียน</label>
+      <select id="f-semester"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="f-type">ประเภทกิจกรรม</label>
+      <select id="f-type"><option value="">ทั้งหมด</option></select>
+    </div>
+    <button type="button" class="filter-reset" id="resetFilters">ล้างตัวกรอง</button>
+  </div>
+
+  <div class="kpi-summary-row" id="kpiSummaryRow">
+    <!-- populated by JS -->
+  </div>
+
+  <div class="section-head">
+    <h3>เปรียบเทียบยอดผู้เข้าร่วมสำเร็จตามกิจกรรม</h3>
+    <span class="result-count" id="chartResultCount"></span>
+  </div>
+  <div class="chart-panel">
+    <div class="chart-canvas-wrap">
+      <canvas id="attendanceChart" height="90"></canvas>
+    </div>
+    <div class="empty-report" id="emptyChart" style="display:none;">ไม่มีข้อมูลกิจกรรมสำหรับแสดงกราฟ</div>
+  </div>
+
+  <div class="section-head">
+    <h3>รายการกิจกรรม</h3>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <div class="report-table-wrap">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>กิจกรรม</th>
+          <th>ปี/ภาค</th>
+          <th>หลักสูตร</th>
+          <th>วันที่</th>
+          <th>ผู้เข้าร่วม</th>
+          <th>ความพึงพอใจ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="reportTableBody"></tbody>
+    </table>
+    <div class="empty-report" id="emptyReport" style="display:none;">ไม่พบกิจกรรมที่ตรงกับตัวกรองที่เลือก</div>
+  </div>
+
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+  const FACULTIES = [
+    "คณะวิทยาศาสตร์","คณะเกษตรศาสตร์","คณะวิศวกรรมศาสตร์","คณะศิลปศาสตร์","คณะเภสัชศาสตร์",
+    "คณะบริหารศาสตร์","คณะพยาบาลศาสตร์","วิทยาลัยแพทยศาสตร์และการสาธารณสุข",
+    "คณะศิลปประยุกต์และสถาปัตยกรรมศาสตร์","คณะนิติศาสตร์","คณะรัฐศาสตร์","คณะศึกษาศาสตร์"
+  ];
+  const EVENT_TYPES = ["กิจกรรมวิชาการ","กิจกรรมนักศึกษา","อบรม/สัมมนา","กีฬา","ศิลปวัฒนธรรม","จิตอาสา","ประชาสัมพันธ์","อื่นๆ"];
+  const ACADEMIC_YEARS = ["2567","2568","2569"];
+  const SEMESTERS = ["ภาค 1","ภาค 2","ภาคพิเศษ"];
+
+  let session = null;
+  let allEvents = [];
+  let filters = { year: "", faculty: "", semester: "", type: "" };
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+  function fmtDate(d) {
+    if (!d) return "-";
+    try { return new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return d; }
+  }
+
+  // ---------- Session & nav ----------
+  function enforceSession() {
+    try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { session = null; }
+    if (!session) { window.location.href = "index.html"; return false; }
+    if (session.role !== "admin" && session.role !== "organizer") {
+      window.location.href = "Student.html";
+      return false;
+    }
+    return true;
+  }
+
+  function setupNav() {
+    const homeHref = session.role === "admin" ? "Admin.html" : "Staff.html";
+    document.getElementById("brandLink").setAttribute("href", homeHref);
+    const navLinks = document.getElementById("navLinks");
+    navLinks.innerHTML = `
+      <a href="${homeHref}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        ${session.role === "admin" ? "แดชบอร์ดผู้ดูแล" : "จัดการกิจกรรม"}
+      </a>
+      <a href="Reports.html" class="active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg>
+        รายงาน
+      </a>
+    `;
+    const initials = session.name.replace(/^(อ\.|นักศึกษา\s?)/, "").trim().slice(0, 2);
+    document.getElementById("navAvatar").textContent = initials || "?";
+
+    const scopeTag = document.getElementById("scopeTag");
+    scopeTag.textContent = session.role === "admin"
+      ? "มุมมองผู้ดูแลระบบ · เห็นกิจกรรมทั้งหมดในระบบ"
+      : "มุมมองผู้จัดกิจกรรม · เห็นเฉพาะกิจกรรมที่ท่านสร้าง";
+  }
+
+  document.getElementById("logout-link").addEventListener("click", () => {
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+
+  // ---------- Data loading ----------
+  async function loadEvents() {
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      // Organizers only see their own events; admins see everything.
+      allEvents = session.role === "admin"
+        ? events
+        : events.filter(e => e.createdBy === session.name || e.updatedBy === session.name);
+    } catch (e) {
+      console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
+      allEvents = [];
+    }
+  }
+
+  // ---------- Filters ----------
+  function populateFilterOptions() {
+    const yearSel = document.getElementById("f-year");
+    const facultySel = document.getElementById("f-faculty");
+    const semesterSel = document.getElementById("f-semester");
+    const typeSel = document.getElementById("f-type");
+
+    ACADEMIC_YEARS.forEach(y => yearSel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`));
+    FACULTIES.forEach(f => facultySel.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`));
+    SEMESTERS.forEach(s => semesterSel.insertAdjacentHTML("beforeend", `<option value="${s}">${s}</option>`));
+    EVENT_TYPES.forEach(t => typeSel.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`));
+
+    yearSel.addEventListener("change", () => { filters.year = yearSel.value; render(); });
+    facultySel.addEventListener("change", () => { filters.faculty = facultySel.value; render(); });
+    semesterSel.addEventListener("change", () => { filters.semester = semesterSel.value; render(); });
+    typeSel.addEventListener("change", () => { filters.type = typeSel.value; render(); });
+
+    document.getElementById("resetFilters").addEventListener("click", () => {
+      filters = { year: "", faculty: "", semester: "", type: "" };
+      yearSel.value = ""; facultySel.value = ""; semesterSel.value = ""; typeSel.value = "";
+      render();
+    });
+  }
+
+  function getFilteredEvents() {
+    return allEvents.filter(e => {
+      if (filters.year && e.academicYear !== filters.year) return false;
+      if (filters.faculty && e.faculty !== filters.faculty) return false;
+      if (filters.semester && e.semester !== filters.semester) return false;
+      if (filters.type && e.type !== filters.type) return false;
+      return true;
+    });
+  }
+
+  // ---------- KPI summary ----------
+  function renderKpiSummary(events) {
+    const totalEvents = events.length;
+    const totalAttendance = events.reduce((sum, e) => sum + (Number(e.kpiAttendActual) || 0), 0);
+    const satScores = events.filter(e => e.kpiSatActual).map(e => Number(e.kpiSatActual));
+    const avgSat = satScores.length ? (satScores.reduce((a, b) => a + b, 0) / satScores.length).toFixed(1) : "-";
+
+    const withAttendTarget = events.filter(e => e.kpiAttendTarget && e.kpiAttendActual);
+    const attendHitCount = withAttendTarget.filter(e => Number(e.kpiAttendActual) >= Number(e.kpiAttendTarget)).length;
+    const attendHitRate = withAttendTarget.length ? Math.round((attendHitCount / withAttendTarget.length) * 100) : null;
+
+    const row = document.getElementById("kpiSummaryRow");
+    row.innerHTML = `
+      <div class="kpi-summary-card">
+        <div class="lbl">กิจกรรมทั้งหมด (ตามตัวกรอง)</div>
+        <div class="val">${totalEvents}</div>
+      </div>
+      <div class="kpi-summary-card">
+        <div class="lbl">ผู้เข้าร่วมสะสม</div>
+        <div class="val gold">${totalAttendance.toLocaleString()}</div>
+      </div>
+      <div class="kpi-summary-card">
+        <div class="lbl">คะแนนความพึงพอใจเฉลี่ย</div>
+        <div class="val">${avgSat}${avgSat !== "-" ? " / 5" : ""}</div>
+      </div>
+      <div class="kpi-summary-card">
+        <div class="lbl">อัตราบรรลุเป้าผู้เข้าร่วม</div>
+        <div class="val ${attendHitRate !== null && attendHitRate >= 80 ? "gold" : ""}">${attendHitRate !== null ? attendHitRate + "%" : "-"}</div>
+        <div class="sub">${withAttendTarget.length} กิจกรรมที่มีข้อมูลเปรียบเทียบ</div>
+      </div>
+    `;
+  }
+
+  // ---------- Table ----------
+  function kpiCellHtml(actual, target, unit) {
+    if (!target) return `<span class="kpi-mini pending">ไม่ได้ตั้งเป้า</span>`;
+    if (!actual) return `<span class="kpi-mini pending">ยังไม่มีผล / เป้า ${escapeHtml(target)}${unit}</span>`;
+    const hit = Number(actual) >= Number(target);
+    return `<span class="kpi-mini"><span class="${hit ? 'hit' : 'miss'}">${escapeHtml(actual)}${unit}</span> / เป้า ${escapeHtml(target)}${unit}</span>`;
+  }
+
+  function renderTable(events) {
+    const tbody = document.getElementById("reportTableBody");
+    const emptyEl = document.getElementById("emptyReport");
+    const countEl = document.getElementById("resultCount");
+    countEl.textContent = events.length ? `พบ ${events.length} กิจกรรม` : "";
+
+    if (events.length === 0) {
+      tbody.innerHTML = "";
+      emptyEl.style.display = "";
+      return;
+    }
+    emptyEl.style.display = "none";
+
+    const sorted = [...events].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    tbody.innerHTML = sorted.map(e => `
+      <tr>
+        <td>
+          <div class="ev-title">${escapeHtml(e.title || "(ไม่มีชื่อ)")}</div>
+          <span class="ev-tag">${escapeHtml(e.type || "ไม่ระบุประเภท")}</span>
+        </td>
+        <td>${escapeHtml(e.academicYear) || "-"}${e.semester ? " · " + escapeHtml(e.semester) : ""}</td>
+        <td>${escapeHtml(e.faculty) || "-"}</td>
+        <td>${fmtDate(e.date)}</td>
+        <td>${kpiCellHtml(e.kpiAttendActual, e.kpiAttendTarget, "")}</td>
+        <td>${kpiCellHtml(e.kpiSatActual, e.kpiSatTarget, "/5")}</td>
+        <td><button type="button" class="view-btn" data-id="${e.id}">ดูสรุป</button></td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".view-btn").forEach(btn => {
+      btn.addEventListener("click", () => openDetail(btn.dataset.id));
+    });
+  }
+
+  // ---------- Detail modal ----------
+  function openDetail(id) {
+    const ev = allEvents.find(e => e.id === id);
+    if (!ev) return;
+
+    const attendHit = ev.kpiAttendTarget && ev.kpiAttendActual && Number(ev.kpiAttendActual) >= Number(ev.kpiAttendTarget);
+    const satHit = ev.kpiSatTarget && ev.kpiSatActual && Number(ev.kpiSatActual) >= Number(ev.kpiSatTarget);
+
+    function statusText(actual, target, hit) {
+      if (!target) return { text: "ไม่ได้ตั้งเป้า", cls: "pending" };
+      if (!actual) return { text: "รอผลจริง", cls: "pending" };
+      return hit ? { text: "บรรลุเป้าหมาย", cls: "hit" } : { text: "ยังไม่ถึงเป้าหมาย", cls: "miss" };
+    }
+    const attendStatus = statusText(ev.kpiAttendActual, ev.kpiAttendTarget, attendHit);
+    const satStatus = statusText(ev.kpiSatActual, ev.kpiSatTarget, satHit);
+
+    document.getElementById("modalRoot").innerHTML = `
+      <div class="overlay" id="detailOverlay">
+        <div class="modal">
+          <div class="modal-head">
+            <div>
+              <h2>${escapeHtml(ev.title || "(ไม่มีชื่อ)")}</h2>
+              <div class="modal-sub">${fmtDate(ev.date)} · ผู้จัด: ${escapeHtml(ev.host) || "-"}</div>
+            </div>
+            <button class="close-x" id="closeDetail">✕</button>
+          </div>
+
+          <div class="detail-tags">
+            ${ev.type ? `<span class="detail-tag">${escapeHtml(ev.type)}</span>` : ""}
+            ${ev.academicYear ? `<span class="detail-tag">ปีการศึกษา ${escapeHtml(ev.academicYear)}</span>` : ""}
+            ${ev.semester ? `<span class="detail-tag">${escapeHtml(ev.semester)}</span>` : ""}
+            ${ev.faculty ? `<span class="detail-tag">${escapeHtml(ev.faculty)}</span>` : ""}
+            ${ev.geoLat ? `<span class="detail-tag">📍 รัศมี ${escapeHtml(ev.geoRadius)} ม.</span>` : ""}
+          </div>
+
+          <div class="kpi-detail-grid">
+            <div class="kpi-detail-box">
+              <div class="kd-label">จำนวนผู้เข้าร่วม</div>
+              <div class="kd-row">
+                <span class="kd-actual">${escapeHtml(ev.kpiAttendActual) || "-"}</span>
+                <span class="kd-target">/ เป้า ${escapeHtml(ev.kpiAttendTarget) || "ไม่ระบุ"}</span>
+              </div>
+              <div class="kd-status ${attendStatus.cls}">${attendStatus.text}</div>
+            </div>
+            <div class="kpi-detail-box">
+              <div class="kd-label">ความพึงพอใจ (เต็ม 5)</div>
+              <div class="kd-row">
+                <span class="kd-actual">${escapeHtml(ev.kpiSatActual) || "-"}</span>
+                <span class="kd-target">/ เป้า ${escapeHtml(ev.kpiSatTarget) || "ไม่ระบุ"}</span>
+              </div>
+              <div class="kd-status ${satStatus.cls}">${satStatus.text}</div>
+            </div>
+          </div>
+
+          ${ev.description ? `<div class="detail-meta-row" style="display:block; margin-bottom:14px;">${escapeHtml(ev.description)}</div>` : ""}
+
+          ${ev.team && ev.team.length ? `<div class="detail-meta-row"><b>ทีมงาน:</b> ${ev.team.map(escapeHtml).join(", ")}</div>` : ""}
+          <div class="detail-meta-row"><b>สร้างโดย:</b> ${escapeHtml(ev.createdBy) || "-"}</div>
+        </div>
+      </div>
+    `;
+    document.getElementById("closeDetail").addEventListener("click", closeDetail);
+    document.getElementById("detailOverlay").addEventListener("click", (e) => {
+      if (e.target.id === "detailOverlay") closeDetail();
+    });
+  }
+  function closeDetail() {
+    document.getElementById("modalRoot").innerHTML = "";
+  }
+
+  // ---------- Chart: bar chart comparing successful attendance per event ----------
+  let attendanceChartInstance = null;
+  function renderChart(events) {
+    const canvas = document.getElementById("attendanceChart");
+    const emptyEl = document.getElementById("emptyChart");
+    const countEl = document.getElementById("chartResultCount");
+
+    const withAttendance = [...events]
+      .filter(e => e.kpiAttendActual !== undefined && e.kpiAttendActual !== "")
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+      .slice(0, 12) // keep the chart readable
+      .reverse();
+
+    countEl.textContent = withAttendance.length ? `แสดง ${withAttendance.length} กิจกรรมล่าสุดที่มีข้อมูลผู้เข้าร่วม` : "";
+
+    if (withAttendance.length === 0) {
+      canvas.style.display = "none";
+      emptyEl.style.display = "";
+      if (attendanceChartInstance) { attendanceChartInstance.destroy(); attendanceChartInstance = null; }
+      return;
+    }
+    canvas.style.display = "";
+    emptyEl.style.display = "none";
+
+    const labels = withAttendance.map(e => e.title || "(ไม่มีชื่อ)");
+    const actuals = withAttendance.map(e => Number(e.kpiAttendActual) || 0);
+    const targets = withAttendance.map(e => e.kpiAttendTarget ? Number(e.kpiAttendTarget) : null);
+
+    if (attendanceChartInstance) attendanceChartInstance.destroy();
+    attendanceChartInstance = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "ผู้เข้าร่วมสำเร็จจริง",
+            data: actuals,
+            backgroundColor: "#C9A227",
+            borderRadius: 4,
+            maxBarThickness: 36
+          },
+          {
+            label: "เป้าหมาย",
+            data: targets,
+            backgroundColor: "rgba(38,56,94,0.35)",
+            borderRadius: 4,
+            maxBarThickness: 36
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom", labels: { font: { family: "'Noto Sans Thai', sans-serif", size: 12 } } },
+          tooltip: { bodyFont: { family: "'Noto Sans Thai', sans-serif" }, titleFont: { family: "'Noto Sans Thai', sans-serif" } }
+        },
+        scales: {
+          x: { ticks: { font: { family: "'Noto Sans Thai', sans-serif", size: 11 }, maxRotation: 30, minRotation: 0 } },
+          y: { beginAtZero: true, ticks: { font: { family: "'Noto Sans Thai', sans-serif" } } }
+        }
+      }
+    });
+  }
+
+  // ---------- Main render ----------
+  function render() {
+    const filtered = getFilteredEvents();
+    renderKpiSummary(filtered);
+    renderChart(filtered);
+    renderTable(filtered);
+  }
+
+  (async function init() {
+    if (!enforceSession()) return;
+    setupNav();
+    populateFilterOptions();
+    await loadEvents();
+    render();
+  })();
+</script>
+
+</body>
+</html>

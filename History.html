@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ประวัติการเข้าร่วมกิจกรรม | UBU Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#132038;
+    --navy-800:#1B2A4A;
+    --navy-700:#26385E;
+    --navy-600:#3A4E76;
+    --gold-500:#C9A227;
+    --gold-600:#AD8A1F;
+    --gold-100:#F3E9C7;
+    --paper:#FAF9F6;
+    --paper-2:#F1EEE5;
+    --ink:#1E2430;
+    --ink-soft:#5B6472;
+    --line:#E3E0D5;
+    --green:#2F7A4F;
+    --green-100:#E3F1E7;
+    --amber:#B3792E;
+    --amber-100:#F6EBDA;
+    --red:#B3432E;
+    --red-100:#F7E7E3;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Noto Sans Thai','Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  /* TOP NAVBAR */
+  .navbar{
+    background:var(--navy-900);
+    color:#fff;
+    padding:0 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:64px;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .nav-left{display:flex; align-items:center; gap:36px;}
+  .nav-brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit;}
+  .brand-mark{
+    width:32px;height:32px;
+    border:1.5px solid var(--gold-500);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--gold-500);
+    flex-shrink:0;
+  }
+  .nav-brand-name{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:14px;
+    line-height:1.2;
+  }
+  .nav-brand-name span{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    font-size:9.5px;
+    color:#8A93A8;
+    letter-spacing:.4px;
+  }
+  .nav-links{display:flex; gap:6px;}
+  .nav-links a{
+    display:flex; align-items:center; gap:7px;
+    padding:8px 14px;
+    border-radius:8px;
+    color:#B7BFCE;
+    font-size:13.5px;
+    font-weight:500;
+    text-decoration:none;
+  }
+  .nav-links a.active{background:var(--navy-700); color:#fff;}
+  .nav-links a.active svg{stroke:var(--gold-500);}
+  .nav-links a svg{flex-shrink:0;}
+
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .nav-avatar{
+    width:32px;height:32px;
+    border-radius:50%;
+    background:var(--gold-500);
+    color:var(--navy-900);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    font-size:12px;
+    font-family:'Noto Serif Thai',serif;
+    flex-shrink:0;
+    text-decoration:none;
+  }
+
+  .mobile-toggle{display:none;}
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .mobile-toggle{
+      display:flex; align-items:center; justify-content:center;
+      width:34px;height:34px;
+      background:rgba(255,255,255,0.08);
+      border-radius:8px;
+      cursor:pointer;
+    }
+  }
+
+  /* PAGE HEADER */
+  .page-header{
+    background:var(--navy-800);
+    color:#fff;
+    padding:36px 32px 28px;
+  }
+  .page-header-inner{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .page-header h1{
+    font-family:'Noto Serif Thai',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 6px;
+  }
+  .page-header p{
+    margin:0 0 22px;
+    font-size:13.5px;
+    color:#9AA6BC;
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    max-width:520px;
+  }
+  .stat-chip{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .stat-chip .num{font-family:'Noto Serif Thai',serif; font-weight:600; font-size:24px; line-height:1;}
+  .stat-chip .lbl{font-size:11px; color:#AAB4C5; margin-top:6px;}
+  .stat-chip.gold .num{color:var(--gold-500);}
+  .stat-chip.red .num{color:#E8897B;}
+
+  /* CONTENT */
+  .content{
+    max-width:1100px;
+    margin:0 auto;
+    padding:28px 32px 70px;
+  }
+
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .filter-bar{display:flex; gap:8px; flex-wrap:wrap;}
+  .filter-chip{
+    font-size:13px;
+    font-weight:500;
+    padding:8px 15px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .filter-chip.active{background:var(--navy-800); color:#fff; border-color:var(--navy-800);}
+
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 13px;
+    width:240px;
+  }
+  .search-box input{
+    border:none; background:transparent; outline:none;
+    font-family:inherit; font-size:13px; width:100%; color:var(--ink);
+  }
+
+  .month-lbl{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    margin:26px 0 12px;
+  }
+  .month-lbl:first-of-type{margin-top:0;}
+
+  /* Table-style rows for desktop, become cards on mobile */
+  .history-list{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .history-row{
+    display:grid;
+    grid-template-columns:44px 1fr 200px 130px 110px;
+    align-items:center;
+    gap:16px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--paper-2);
+    transition:background .12s ease;
+  }
+  .history-row:last-child{border-bottom:none;}
+  .history-row:hover{background:var(--paper-2);}
+
+  .h-icon{
+    width:38px;height:38px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .h-icon.ontime{background:var(--green-100);}
+  .h-icon.late{background:var(--amber-100);}
+  .h-icon.absent{background:var(--red-100);}
+
+  .h-name{font-size:14px; font-weight:500; color:var(--ink); margin-bottom:2px;}
+  .h-meta{font-size:12px; color:var(--ink-soft);}
+
+  .h-date{font-size:13px; color:var(--ink);}
+  .h-date .dow{font-size:11px; color:var(--ink-soft); display:block; margin-top:1px;}
+
+  .status-pill{
+    font-size:11.5px;
+    font-weight:500;
+    padding:4px 11px;
+    border-radius:999px;
+    display:inline-block;
+  }
+  .status-pill.ontime{background:var(--green-100); color:#1E5C39;}
+  .status-pill.late{background:var(--amber-100); color:#8A5D22;}
+  .status-pill.absent{background:var(--red-100); color:#7A2E1E;}
+
+  .h-time{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+
+  .list-headings{
+    display:grid;
+    grid-template-columns:44px 1fr 200px 130px 110px;
+    gap:16px;
+    padding:0 18px 10px;
+    font-size:11px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.4px;
+  }
+
+  @media (max-width:760px){
+    .list-headings{display:none;}
+    .history-row{
+      grid-template-columns:38px 1fr;
+      grid-template-areas:
+        "icon name"
+        "icon meta"
+        "icon bottom";
+      row-gap:4px;
+    }
+    .h-icon{grid-area:icon;}
+    .h-name{grid-area:name;}
+    .h-meta{grid-area:meta;}
+    .h-date, .h-time{display:none;}
+    .status-pill{grid-area:bottom;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a class="nav-brand" href="Student.html">
+      <div class="brand-mark">มบ</div>
+      <div class="nav-brand-name">ระบบเช็คชื่อกิจกรรม<span>UBU ATTENDANCE</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="Student.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        หน้าหลัก
+      </a>
+      <a href="History.html" class="active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+        ประวัติ
+      </a>
+      <a href="Scan.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        สแกน QR
+      </a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="mobile-toggle">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </div>
+    <a href="#" id="logout-link" title="ออกจากระบบ" style="display:flex; align-items:center; gap:5px; color:#B7BFCE; font-size:12.5px; text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      ออกจากระบบ
+    </a>
+    <a class="nav-avatar" href="#" title="โปรไฟล์" id="nav-avatar">ณช</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1>ประวัติการเข้าร่วมกิจกรรม</h1>
+    <p>สรุปการเช็คชื่อกิจกรรมทั้งหมดของท่าน</p>
+
+    <div class="stat-row">
+      <div class="stat-chip gold"><div class="num">24</div><div class="lbl">เข้าร่วมทั้งหมด</div></div>
+      <div class="stat-chip"><div class="num">89%</div><div class="lbl">อัตราเข้าร่วม</div></div>
+      <div class="stat-chip red"><div class="num">3</div><div class="lbl">ไม่ได้เข้าร่วม</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="toolbar">
+    <div class="filter-bar">
+      <span class="filter-chip active">ทั้งหมด</span>
+      <span class="filter-chip">เข้าร่วมแล้ว</span>
+      <span class="filter-chip">มาสาย</span>
+      <span class="filter-chip">ไม่ได้เข้าร่วม</span>
+    </div>
+    <div class="search-box">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" placeholder="ค้นหากิจกรรม">
+    </div>
+  </div>
+
+  <div class="month-lbl">กรกฎาคม 2569</div>
+  <div class="history-list">
+    <div class="list-headings">
+      <span></span><span>กิจกรรม</span><span>วันที่</span><span>สถานะ</span><span style="text-align:right;">เวลาเช็คชื่อ</span>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon ontime"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <div><div class="h-name">ค่ายอาสาพัฒนาชุมชน</div><div class="h-meta">ลานกิจกรรม คณะ · ชมรมอาสา</div></div>
+      <div class="h-date">17 ก.ค. 2569<span class="dow">พฤหัสบดี</span></div>
+      <div><span class="status-pill ontime">เข้าร่วมแล้ว</span></div>
+      <div class="h-time">10:02 น.</div>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon absent"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7A2E1E" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div><div class="h-name">เสวนาแนะแนวอาชีพ</div><div class="h-meta">ห้อง Auditorium · ฝ่ายแนะแนว</div></div>
+      <div class="h-date">16 ก.ค. 2569<span class="dow">พุธ</span></div>
+      <div><span class="status-pill absent">ไม่ได้เข้าร่วม</span></div>
+      <div class="h-time">—</div>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon late"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A5D22" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg></div>
+      <div><div class="h-name">อบรมทักษะดิจิทัลเบื้องต้น</div><div class="h-meta">ห้องประชุม IT-205 · สำนักคอมพิวเตอร์</div></div>
+      <div class="h-date">14 ก.ค. 2569<span class="dow">จันทร์</span></div>
+      <div><span class="status-pill late">มาสาย</span></div>
+      <div class="h-time">13:22 น.</div>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon ontime"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <div><div class="h-name">ปฐมนิเทศนักศึกษาใหม่ 2569</div><div class="h-meta">หอประชุมใหญ่ · ฝ่ายกิจการนักศึกษา</div></div>
+      <div class="h-date">10 ก.ค. 2569<span class="dow">ศุกร์</span></div>
+      <div><span class="status-pill ontime">เข้าร่วมแล้ว</span></div>
+      <div class="h-time">09:04 น.</div>
+    </div>
+  </div>
+
+  <div class="month-lbl">มิถุนายน 2569</div>
+  <div class="history-list">
+    <div class="list-headings">
+      <span></span><span>กิจกรรม</span><span>วันที่</span><span>สถานะ</span><span style="text-align:right;">เวลาเช็คชื่อ</span>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon ontime"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <div><div class="h-name">กิจกรรมไหว้ครู ประจำปี 2569</div><div class="h-meta">หอประชุมใหญ่ · ฝ่ายกิจการนักศึกษา</div></div>
+      <div class="h-date">26 มิ.ย. 2569<span class="dow">ศุกร์</span></div>
+      <div><span class="status-pill ontime">เข้าร่วมแล้ว</span></div>
+      <div class="h-time">08:47 น.</div>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon ontime"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1E5C39" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+      <div><div class="h-name">อบรมความปลอดภัยในห้องปฏิบัติการ</div><div class="h-meta">ห้อง Lab อาคารวิทยาศาสตร์</div></div>
+      <div class="h-date">19 มิ.ย. 2569<span class="dow">ศุกร์</span></div>
+      <div><span class="status-pill ontime">เข้าร่วมแล้ว</span></div>
+      <div class="h-time">13:01 น.</div>
+    </div>
+
+    <div class="history-row">
+      <div class="h-icon absent"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7A2E1E" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div><div class="h-name">เลือกตั้งสภานักศึกษา</div><div class="h-meta">ลานกิจกรรม คณะ · สโมสรนักศึกษา</div></div>
+      <div class="h-date">5 มิ.ย. 2569<span class="dow">พฤหัสบดี</span></div>
+      <div><span class="status-pill absent">ไม่ได้เข้าร่วม</span></div>
+      <div class="h-time">—</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function enforceSession() {
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
+
+    if (!session) {
+      window.location.href = "index.html";
+      return;
+    }
+    const roleTargets = { admin: "Admin.html", organizer: "Staff.html" };
+    if (session.role !== "participant" && roleTargets[session.role]) {
+      window.location.href = roleTargets[session.role];
+      return;
+    }
+
+    const initials = session.name.replace(/^(อ\.|นักศึกษา\s?)/, "").trim().slice(0, 2);
+    const avatarEl = document.getElementById("nav-avatar");
+    if (avatarEl) avatarEl.textContent = initials || "?";
+  })();
+
+  document.getElementById("logout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("ubu_session");
+    window.location.href = "index.html";
+  });
+</script>
+
+</body>
+</html>
