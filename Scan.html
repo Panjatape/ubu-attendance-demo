@@ -47,6 +47,17 @@
   }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script>
+  // Fallback: if the primary CDN failed to load jsQR (network block, ad-blocker,
+  // slow connection, etc.), try an alternate CDN before giving up.
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof jsQR === 'undefined') {
+      const fallback = document.createElement('script');
+      fallback.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      document.head.appendChild(fallback);
+    }
+  });
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scan QR &amp; Check-in | UBU Attendance</title>
@@ -998,8 +1009,14 @@
       return;
     }
     if (typeof jsQR === 'undefined') {
-      if (hint) { hint.textContent = 'โหลดตัวอ่าน QR ไม่สำเร็จ (เช็คอินเทอร์เน็ต) ใช้ปุ่มด้านล่างแทนได้'; hint.classList.add('error'); }
-      return;
+      // Give the fallback CDN script (loaded on DOMContentLoaded) a brief moment to finish,
+      // since the user just tapped "start camera" and jsQR might still be arriving.
+      if (hint) { hint.textContent = 'กำลังโหลดตัวอ่าน QR...'; hint.classList.remove('error'); }
+      await new Promise(r => setTimeout(r, 1200));
+      if (typeof jsQR === 'undefined') {
+        if (hint) { hint.textContent = 'โหลดตัวอ่าน QR ไม่สำเร็จ (เช็คอินเทอร์เน็ต) ใช้ปุ่ม "จำลองการสแกนสำเร็จ" แทนได้'; hint.classList.add('error'); }
+        return;
+      }
     }
     if (!window.isSecureContext) {
       if (hint) { hint.textContent = 'หน้านี้ต้องเปิดผ่าน HTTPS กล้องถึงจะทำงานได้'; hint.classList.add('error'); }
