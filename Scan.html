@@ -920,6 +920,24 @@
     }
   }
 
+  // Recomputes the event's kpiAttendActual from real attendance-records (only records
+  // marked isAttendSuccess count), so Reports.html reflects actual check-ins rather
+  // than survey submission counts.
+  async function syncEventAttendanceCount(eventId, allRecords) {
+    try {
+      const successCount = allRecords.filter(r => r.eventId === eventId && r.isAttendSuccess).length;
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      const idx = events.findIndex(e => e.id === eventId);
+      if (idx !== -1) {
+        events[idx].kpiAttendActual = successCount;
+        await window.storage.set("events-list", JSON.stringify(events), true);
+      }
+    } catch (e) {
+      console.error("อัปเดตยอดผู้เข้าร่วมของกิจกรรมไม่สำเร็จ", e);
+    }
+  }
+
   // Load the real event this scan is for, based on ?event=<id> in the URL.
   async function loadEventFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -1201,14 +1219,14 @@
       });
       await window.storage.set(key, JSON.stringify(responses), true);
 
-      // Recalculate the event's KPI: average satisfaction + attendance count from responses
+      // Recalculate the event's satisfaction KPI (attendance count is now tracked
+      // separately from real check-in/check-out records, not survey submissions).
       const eventsRes = await window.storage.get("events-list", true);
       const events = eventsRes ? JSON.parse(eventsRes.value) : [];
       const idx = events.findIndex(e => e.id === currentEventId);
       if (idx !== -1) {
         const avgRating = responses.reduce((sum, r) => sum + r.rating, 0) / responses.length;
         events[idx].kpiSatActual = avgRating.toFixed(1);
-        events[idx].kpiAttendActual = responses.length;
         await window.storage.set("events-list", JSON.stringify(events), true);
       }
     } catch (e) {
@@ -1348,9 +1366,19 @@
     const nowLabel = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
     if (scanStage === "checkin") {
-      myRecord = { eventId: currentEventId, userEmail: currentUser.name, checkInTime: nowIso, checkOutTime: null };
+      const requireCheckout = currentEvent.requireCheckout !== undefined ? currentEvent.requireCheckout : systemConfig.requireCheckout;
+      myRecord = {
+        eventId: currentEventId,
+        userEmail: currentUser.name,
+        checkInTime: nowIso,
+        checkOutTime: null,
+        // Single-scan mode (no required checkout) counts as successful attendance immediately.
+        isAttendSuccess: requireCheckout ? false : true,
+        attendPercent: requireCheckout ? null : 100
+      };
       records.push(myRecord);
       await saveAllAttendanceRecords(records);
+      await syncEventAttendanceCount(currentEventId, records);
 
       document.getElementById('checkoutBadge').style.display = 'none';
       document.getElementById('successTitle').textContent = 'เช็คชื่อ (เข้า) สำเร็จ';
@@ -1367,7 +1395,6 @@
       const idx = records.findIndex(r => r.eventId === currentEventId && r.userEmail === currentUser.name);
       if (idx !== -1) {
         records[idx].checkOutTime = nowIso;
-        await saveAllAttendanceRecords(records);
         myRecord = records[idx];
       }
 
@@ -1386,6 +1413,14 @@
         percent = Math.min(100, Math.round((presentMs / totalMs) * 100));
         success = percent >= requiredPercent;
       }
+
+      if (idx !== -1) {
+        records[idx].attendPercent = percent;
+        records[idx].isAttendSuccess = success;
+        myRecord = records[idx];
+      }
+      await saveAllAttendanceRecords(records);
+      await syncEventAttendanceCount(currentEventId, records);
 
       document.getElementById('checkoutBadge').style.display = 'inline-flex';
       document.getElementById('successTitle').textContent = success ? 'เช็คชื่อ (ออก) สำเร็จ' : 'เช็คชื่อออกสำเร็จ แต่เวลาเข้าร่วมไม่ครบเกณฑ์';
