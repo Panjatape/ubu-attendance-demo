@@ -2,21 +2,10 @@
 <html lang="th">
 <head>
 <script>
-  // ---------------------------------------------------------------
-  // window.storage shim — makes the app's existing storage calls
-  // (get/set/delete/list) work on GitHub Pages using localStorage,
-  // since the real Claude-artifact window.storage API isn't available
-  // outside Claude. Shared/non-shared keys are prefixed differently
-  // so they don't collide.
-  // ---------------------------------------------------------------
   if (!window.storage) {
     const PREFIX_SHARED = "ubu_shared__";
     const PREFIX_PRIVATE = "ubu_private__";
-
-    function keyFor(key, shared) {
-      return (shared ? PREFIX_SHARED : PREFIX_PRIVATE) + key;
-    }
-
+    function keyFor(key, shared) { return (shared ? PREFIX_SHARED : PREFIX_PRIVATE) + key; }
     window.storage = {
       async get(key, shared = false) {
         const raw = localStorage.getItem(keyFor(key, shared));
@@ -48,8 +37,6 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <script>
-  // Fallback: if the primary CDN failed to load jsQR (network block, ad-blocker,
-  // slow connection, etc.), try an alternate CDN before giving up.
   window.addEventListener('DOMContentLoaded', () => {
     if (typeof jsQR === 'undefined') {
       const fallback = document.createElement('script');
@@ -59,230 +46,320 @@
   });
 </script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scan QR &amp; Check-in | UBU Attendance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>สแกน QR เช็คชื่อ | UBU Attendance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&family=Noto+Sans+Thai:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy-900:#132038;
-    --navy-800:#1B2A4A;
-    --navy-700:#26385E;
-    --navy-600:#3A4E76;
-    --gold-500:#C9A227;
-    --gold-600:#AD8A1F;
-    --gold-100:#F3E9C7;
-    --paper:#FAF9F6;
-    --paper-2:#F1EEE5;
-    --ink:#1E2430;
-    --ink-soft:#5B6472;
-    --line:#E3E0D5;
-    --green:#2F7A4F;
-    --green-100:#E3F1E7;
-    --red:#B3432E;
-    --red-100:#F7E7E3;
-    --radius:14px;
+    --navy-950:#0a0f1a;
+    --navy-900:#0d1321;
+    --navy-850:#111827;
+    --navy-800:#1a2332;
+    --navy-700:#243447;
+    --navy-600:#3a506b;
+    --gold-500:#d4af37;
+    --gold-400:#e4c158;
+    --gold-300:#f0d78c;
+    --gold-200:#f5e6b8;
+    --gold-100:#faf3d8;
+    --gold-glow:rgba(212,175,55,0.35);
+    --paper:#f8f6f1;
+    --paper-2:#ede9de;
+    --ink:#0f1419;
+    --ink-soft:#6b7280;
+    --line:#e5e0d4;
+    --green:#22c55e;
+    --green-600:#16a34a;
+    --green-100:#dcfce7;
+    --green-glow:rgba(34,197,94,0.3);
+    --red:#ef4444;
+    --red-600:#dc2626;
+    --red-100:#fee2e2;
+    --red-glow:rgba(239,68,68,0.3);
+    --glass-bg:rgba(255,255,255,0.04);
+    --glass-border:rgba(255,255,255,0.08);
+    --glass-border-strong:rgba(255,255,255,0.14);
+    --radius-sm:10px;
+    --radius:16px;
+    --radius-lg:24px;
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.2);
+    --shadow:0 8px 32px rgba(0,0,0,0.3);
+    --shadow-lg:0 20px 60px rgba(0,0,0,0.4);
+    --shadow-gold:0 0 30px rgba(212,175,55,0.15);
+    --transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--paper-2);
-    font-family:'Noto Sans Thai','Inter',sans-serif;
-    color:var(--ink);
+    background:var(--navy-950);
+    font-family:'Noto Sans Thai','Inter',system-ui,-apple-system,sans-serif;
+    color:#fff;
     min-height:100vh;
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding:28px 16px 60px;
+    padding:0;
+    overflow-x:hidden;
   }
 
-  .switcher{
-    display:flex;
-    gap:6px;
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:4px;
-    margin-bottom:22px;
-    flex-wrap:wrap;
-    justify-content:center;
-    max-width:420px;
+  /* Ambient background glow */
+  body::before{
+    content:'';
+    position:fixed;
+    top:-50%;left:-50%;
+    width:200%;height:200%;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(212,175,55,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(58,80,107,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(13,19,33,0) 0%, transparent 70%);
+    pointer-events:none;
+    z-index:0;
+    animation:ambientShift 15s ease-in-out infinite alternate;
   }
-  .switcher button{
-    border:none;
-    background:transparent;
-    font-family:inherit;
-    font-size:11.5px;
-    font-weight:500;
-    color:var(--ink-soft);
-    padding:7px 12px;
-    border-radius:999px;
-    cursor:pointer;
-    transition:background .15s ease, color .15s ease;
-  }
-  .switcher button.active{
-    background:var(--navy-800);
-    color:#fff;
+  @keyframes ambientShift{
+    0%{transform:translate(0,0) scale(1);}
+    100%{transform:translate(-2%,-2%) scale(1.05);}
   }
 
-  /* PHONE FRAME */
+  .switcher{ display:none !important; }
+
+  /* PHONE FRAME — Desktop */
   .phone{
-    width:340px;
+    width:400px;
     max-width:100%;
-    height:660px;
-    background:var(--navy-900);
-    border-radius:34px;
-    padding:10px;
-    box-shadow:0 20px 50px rgba(19,32,56,0.28);
+    height:760px;
+    background:linear-gradient(145deg, var(--navy-850), var(--navy-900));
+    border-radius:40px;
+    padding:12px;
+    box-shadow:
+      0 25px 80px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.08);
     position:relative;
+    margin-top:20px;
+    margin-bottom:20px;
+    z-index:1;
   }
   .screen{
-    width:100%;
-    height:100%;
-    background:var(--navy-900);
-    border-radius:26px;
+    width:100%;height:100%;
+    background:var(--navy-950);
+    border-radius:30px;
     overflow:hidden;
     position:relative;
     display:flex;
     flex-direction:column;
     color:#fff;
+    box-shadow:inset 0 0 40px rgba(0,0,0,0.3);
   }
   .notch{
     position:absolute;
-    top:8px;left:50%;
+    top:10px;left:50%;
     transform:translateX(-50%);
-    width:90px;height:22px;
-    background:var(--navy-900);
-    border-radius:12px;
+    width:100px;height:24px;
+    background:var(--navy-950);
+    border-radius:14px;
     z-index:20;
+    box-shadow:0 2px 10px rgba(0,0,0,0.3);
   }
 
   .topbar{
-    padding:38px 20px 14px;
+    padding:42px 22px 16px;
     display:flex;
     align-items:center;
     justify-content:space-between;
     z-index:10;
     position:relative;
+    background:linear-gradient(180deg, rgba(10,15,26,0.9) 0%, transparent 100%);
   }
   .topbar h2{
     font-family:'Noto Serif Thai',serif;
     font-weight:600;
-    font-size:16px;
+    font-size:17px;
     margin:0;
+    letter-spacing:-0.3px;
+    background:linear-gradient(135deg, #fff 0%, var(--gold-300) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
   }
   .topbar .sub{
-    font-size:11px;
-    color:#9AA6BC;
-    margin-top:2px;
+    font-size:11.5px;
+    color:#8b95a8;
+    margin-top:3px;
+    font-weight:400;
   }
   .close-btn{
-    width:30px;height:30px;
+    width:34px;height:34px;
     border-radius:50%;
-    background:rgba(255,255,255,0.1);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
     display:flex;align-items:center;justify-content:center;
     flex-shrink:0;
+    cursor:pointer;
+    transition:var(--transition);
+    backdrop-filter:blur(8px);
   }
+  .close-btn:hover{
+    background:rgba(255,255,255,0.1);
+    border-color:var(--glass-border-strong);
+    transform:scale(1.08);
+    box-shadow:0 0 15px rgba(255,255,255,0.1);
+  }
+  .close-btn:active{transform:scale(0.95);}
 
   .view{
     flex:1;
     display:none;
     flex-direction:column;
-    padding:0 20px 20px;
+    padding:0 22px 22px;
+    opacity:0;
+    transform:translateY(16px) scale(0.98);
+    transition:opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
   }
-  .view.active{display:flex;}
+  .view.active{
+    display:flex;
+    opacity:1;
+    transform:translateY(0) scale(1);
+    animation:viewEnter 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes viewEnter{
+    from{opacity:0;transform:translateY(20px) scale(0.97);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
 
-  /* ---------- SCAN VIEW ---------- */
+  /* SCAN VIEW */
   .cam-wrap{
     flex:1;
-    background:#0B1526;
-    border-radius:20px;
+    background:linear-gradient(160deg, #070c14 0%, #0f1724 50%, #0a0f1a 100%);
+    border-radius:var(--radius-lg);
     position:relative;
     overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
-    margin-bottom:16px;
+    margin-bottom:18px;
+    border:1px solid rgba(255,255,255,0.04);
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .cam-wrap::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(212,175,55,0.04), transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.02), transparent 50%);
+    z-index:1;
+    pointer-events:none;
   }
   #camVideo{
     position:absolute;
     inset:0;
-    width:100%;
-    height:100%;
+    width:100%;height:100%;
     object-fit:cover;
     z-index:0;
-  }
-  .cam-noise, .viewfinder{
-    position:relative;
-    z-index:1;
-  }
-  .cam-hint.error{
-    color:#F0A897;
   }
   .cam-noise{
     position:absolute;
     inset:0;
     background:
-      radial-gradient(circle at 30% 20%, rgba(255,255,255,0.05), transparent 40%),
-      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.04), transparent 40%);
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,0.04), transparent 45%),
+      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.03), transparent 45%);
+    z-index:1;
+    pointer-events:none;
   }
   .viewfinder{
-    width:190px;height:190px;
+    width:200px;height:200px;
     position:relative;
+    z-index:2;
+    animation:viewfinderPulse 3s ease-in-out infinite;
+  }
+  @keyframes viewfinderPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.02);}
   }
   .corner{
     position:absolute;
-    width:26px;height:26px;
-    border:2.5px solid var(--gold-500);
+    width:28px;height:28px;
+    border:3px solid var(--gold-400);
+    transition:var(--transition);
+    box-shadow:0 0 12px rgba(212,175,55,0.3);
   }
-  .corner.tl{top:0;left:0;border-right:none;border-bottom:none;border-radius:8px 0 0 0;}
-  .corner.tr{top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0;}
-  .corner.bl{bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px;}
-  .corner.br{bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0;}
+  .corner.tl{top:0;left:0;border-right:none;border-bottom:none;border-radius:10px 0 0 0;}
+  .corner.tr{top:0;right:0;border-left:none;border-bottom:none;border-radius:0 10px 0 0;}
+  .corner.bl{bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 10px;}
+  .corner.br{bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 10px 0;}
   .laser{
     position:absolute;
-    left:6px;right:6px;
-    height:2px;
-    background:linear-gradient(90deg, transparent, var(--gold-500), transparent);
-    top:8px;
-    animation:sweep 2s ease-in-out infinite;
-    box-shadow:0 0 8px 1px rgba(201,162,39,0.6);
+    left:8px;right:8px;
+    height:2.5px;
+    background:linear-gradient(90deg, transparent, var(--gold-400), var(--gold-300), var(--gold-400), transparent);
+    top:10px;
+    animation:sweep 2.5s ease-in-out infinite;
+    box-shadow:0 0 12px 2px var(--gold-glow), 0 0 30px 4px rgba(212,175,55,0.15);
+    border-radius:2px;
   }
   @keyframes sweep{
-    0%,100%{top:8px;}
-    50%{top:178px;}
+    0%,100%{top:10px;opacity:0.8;}
+    50%{top:188px;opacity:1;}
   }
   .cam-hint{
     position:absolute;
-    bottom:14px;left:0;right:0;
+    bottom:18px;left:0;right:0;
     text-align:center;
     font-size:12.5px;
-    color:#C7CEDB;
-    z-index:1;
+    color:#a0aec0;
+    z-index:2;
+    padding:0 24px;
+    font-weight:500;
+    text-shadow:0 1px 4px rgba(0,0,0,0.5);
+    animation:hintFade 0.5s ease;
   }
-  .scan-action{
-    text-align:center;
+  .cam-hint.error{ color:#fca5a5; }
+  @keyframes hintFade{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
   }
+  .scan-action{ text-align:center; }
   .scan-action p{
-    font-size:12.5px;
-    color:#9AA6BC;
-    margin:0 0 14px;
-    line-height:1.6;
+    font-size:13px;
+    color:#8b95a8;
+    margin:0 0 16px;
+    line-height:1.7;
+    font-weight:400;
   }
   .btn-gold{
     width:100%;
-    background:var(--gold-500);
-    color:var(--navy-900);
+    background:linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+    color:var(--navy-950);
     border:none;
-    border-radius:12px;
-    padding:14px;
+    border-radius:var(--radius);
+    padding:15px;
     font-family:inherit;
-    font-size:14.5px;
+    font-size:15px;
     font-weight:600;
     cursor:pointer;
+    transition:var(--transition);
+    box-shadow:0 4px 20px rgba(212,175,55,0.25), 0 0 0 1px rgba(212,175,55,0.1);
+    position:relative;
+    overflow:hidden;
   }
+  .btn-gold::before{
+    content:'';
+    position:absolute;
+    top:0;left:-100%;
+    width:100%;height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition:left 0.6s ease;
+  }
+  .btn-gold:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 30px rgba(212,175,55,0.35), 0 0 0 1px rgba(212,175,55,0.2);
+  }
+  .btn-gold:hover::before{left:100%;}
+  .btn-gold:active{transform:translateY(0) scale(0.98);}
 
-  /* ---------- VERIFYING VIEW ---------- */
+  /* VERIFYING VIEW */
   .verify-body{
     flex:1;
     display:flex;
@@ -293,70 +370,96 @@
   }
   .radar{
     position:relative;
-    width:180px;height:180px;
-    margin-bottom:28px;
+    width:190px;height:190px;
+    margin-bottom:32px;
   }
   .ring{
     position:absolute;
-    border:1px solid rgba(201,162,39,0.3);
+    border:1.5px solid rgba(212,175,55,0.25);
     border-radius:50%;
     top:50%;left:50%;
     transform:translate(-50%,-50%);
   }
-  .ring.r1{width:180px;height:180px; animation:pulse 2.2s ease-out infinite;}
-  .ring.r2{width:120px;height:120px; animation:pulse 2.2s ease-out infinite .5s;}
-  .ring.r3{width:60px;height:60px; border-color:rgba(201,162,39,0.5);}
+  .ring.r1{width:190px;height:190px; animation:pulse 2.5s ease-out infinite;}
+  .ring.r2{width:130px;height:130px; animation:pulse 2.5s ease-out infinite 0.6s;}
+  .ring.r3{width:70px;height:70px; border-color:rgba(212,175,55,0.5); box-shadow:0 0 20px rgba(212,175,55,0.15);}
   @keyframes pulse{
-    0%{opacity:.9; transform:translate(-50%,-50%) scale(0.55);}
-    100%{opacity:0; transform:translate(-50%,-50%) scale(1);}
+    0%{opacity:1; transform:translate(-50%,-50%) scale(0.4); border-width:2px;}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(1); border-width:0.5px;}
   }
   .pin-dot{
     position:absolute;top:50%;left:50%;
     transform:translate(-50%,-50%);
-    width:14px;height:14px;
-    background:var(--gold-500);
+    width:16px;height:16px;
+    background:linear-gradient(135deg, var(--gold-400), var(--gold-500));
     border-radius:50%;
-    box-shadow:0 0 0 5px rgba(201,162,39,0.22);
+    box-shadow:0 0 0 6px rgba(212,175,55,0.2), 0 0 20px 4px rgba(212,175,55,0.4);
+    animation:pinGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes pinGlow{
+    from{box-shadow:0 0 0 6px rgba(212,175,55,0.2), 0 0 20px 4px rgba(212,175,55,0.3);}
+    to{box-shadow:0 0 0 8px rgba(212,175,55,0.3), 0 0 30px 6px rgba(212,175,55,0.5);}
   }
   .verify-title{
     font-family:'Noto Serif Thai',serif;
     font-weight:600;
-    font-size:18px;
-    margin:0 0 8px;
+    font-size:19px;
+    margin:0 0 10px;
+    background:linear-gradient(135deg, #fff 0%, var(--gold-200) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
   }
   .verify-sub{
-    font-size:13px;
-    color:#9AA6BC;
-    line-height:1.6;
-    max-width:230px;
+    font-size:13.5px;
+    color:#8b95a8;
+    line-height:1.7;
+    max-width:240px;
   }
   .verify-steps{
     display:flex;
     flex-direction:column;
-    gap:10px;
-    margin-top:26px;
+    gap:12px;
+    margin-top:28px;
     width:100%;
-    max-width:230px;
+    max-width:240px;
     text-align:left;
   }
   .vstep{
     display:flex;
     align-items:center;
-    gap:9px;
-    font-size:12.5px;
-    color:#9AA6BC;
+    gap:10px;
+    font-size:13px;
+    color:#6b7280;
+    transition:var(--transition);
+    padding:6px 10px;
+    border-radius:var(--radius-sm);
   }
   .vstep .dot{
-    width:16px;height:16px;
+    width:18px;height:18px;
     border-radius:50%;
-    background:rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.06);
     display:flex;align-items:center;justify-content:center;
     flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.08);
+    transition:var(--transition);
   }
-  .vstep.done{color:#D7DBE4;}
-  .vstep.done .dot{background:var(--green);}
+  .vstep.done{color:#d1d5db;}
+  .vstep.done .dot{
+    background:linear-gradient(135deg, var(--green), var(--green-600));
+    border-color:transparent;
+    box-shadow:0 0 10px var(--green-glow);
+  }
+  .vstep.processing .dot{
+    animation:dotPulse 1.5s ease-in-out infinite;
+    border-color:var(--gold-400);
+  }
+  @keyframes dotPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0.4);}
+    50%{box-shadow:0 0 0 6px rgba(212,175,55,0);}
+  }
 
-  /* ---------- SUCCESS VIEW ---------- */
+  /* SUCCESS VIEW */
   .result-body{
     flex:1;
     display:flex;
@@ -366,242 +469,352 @@
     text-align:center;
   }
   .result-icon{
-    width:74px;height:74px;
+    width:80px;height:80px;
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    margin-bottom:20px;
-    animation:pop .4s cubic-bezier(.34,1.56,.64,1);
+    margin-bottom:24px;
+    animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    position:relative;
   }
+  .result-icon::before{
+    content:'';
+    position:absolute;
+    inset:-8px;
+    border-radius:50%;
+    opacity:0.3;
+    animation:iconRipple 2s ease-out infinite;
+  }
+  @keyframes iconRipple{
+    0%{transform:scale(0.8); opacity:0.4;}
+    100%{transform:scale(1.3); opacity:0;}
+  }
+  .result-icon.ok{
+    background:linear-gradient(135deg, var(--green), var(--green-600));
+    box-shadow:0 8px 30px var(--green-glow);
+  }
+  .result-icon.ok::before{background:var(--green);}
+  .result-icon.fail{
+    background:linear-gradient(135deg, var(--red), var(--red-600));
+    box-shadow:0 8px 30px var(--red-glow);
+  }
+  .result-icon.fail::before{background:var(--red);}
   @keyframes pop{
-    0%{transform:scale(0.6); opacity:0;}
+    0%{transform:scale(0.4); opacity:0;}
+    60%{transform:scale(1.1);}
     100%{transform:scale(1); opacity:1;}
   }
-  .result-icon.ok{background:var(--green);}
-  .result-icon.fail{background:var(--red);}
   .result-title{
     font-family:'Noto Serif Thai',serif;
     font-weight:600;
-    font-size:19px;
-    margin:0 0 6px;
+    font-size:20px;
+    margin:0 0 8px;
+    background:linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
   }
   .result-sub{
-    font-size:13px;
-    color:#9AA6BC;
-    margin-bottom:24px;
+    font-size:13.5px;
+    color:#8b95a8;
+    margin-bottom:28px;
+    line-height:1.6;
   }
   .result-card{
     width:100%;
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.1);
-    border-radius:14px;
-    padding:16px 18px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:18px 20px;
     text-align:left;
+    backdrop-filter:blur(12px);
+    box-shadow:var(--shadow-sm);
+    transition:var(--transition);
+  }
+  .result-card:hover{
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--shadow);
   }
   .rc-row{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:9px 0;
-    border-bottom:1px solid rgba(255,255,255,0.08);
-    font-size:12.5px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    font-size:13px;
+    transition:var(--transition);
   }
   .rc-row:last-child{border-bottom:none;}
-  .rc-row .k{color:#9AA6BC;}
-  .rc-row .v{color:#fff;font-weight:500;}
+  .rc-row .k{color:#6b7280;}
+  .rc-row .v{color:#f1f5f9;font-weight:500;}
   .badge-ontime{
-    background:var(--green-100);
-    color:#1E5C39;
-    font-size:11px;
-    font-weight:500;
-    padding:2px 9px;
+    background:linear-gradient(135deg, var(--green-100), #dcfce7);
+    color:#14532d;
+    font-size:11.5px;
+    font-weight:600;
+    padding:3px 12px;
     border-radius:999px;
+    box-shadow:0 2px 8px rgba(34,197,94,0.15);
   }
   .result-actions{
     width:100%;
-    margin-top:20px;
+    margin-top:24px;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:12px;
   }
   .btn-outline-light{
     width:100%;
-    background:transparent;
-    border:1px solid rgba(255,255,255,0.2);
-    color:#fff;
-    border-radius:12px;
-    padding:12px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    color:#e2e8f0;
+    border-radius:var(--radius);
+    padding:13px;
     font-family:inherit;
-    font-size:13.5px;
+    font-size:14px;
     font-weight:500;
     cursor:pointer;
+    transition:var(--transition);
+    backdrop-filter:blur(8px);
   }
+  .btn-outline-light:hover{
+    background:rgba(255,255,255,0.08);
+    border-color:var(--glass-border-strong);
+    transform:translateY(-1px);
+    box-shadow:0 4px 16px rgba(0,0,0,0.2);
+  }
+  .btn-outline-light:active{transform:translateY(0) scale(0.98);}
 
   /* FAIL specific */
   .fail-reason{
     display:flex;
     align-items:flex-start;
-    gap:9px;
-    background:var(--red-100);
-    color:#7A2E1E;
-    border-radius:12px;
-    padding:12px 14px;
-    font-size:12px;
-    line-height:1.55;
-    text-align:left;
-    margin-bottom:18px;
-  }
-  .fail-reason svg{flex-shrink:0;margin-top:1px;}
-  .distance-tag{
+    gap:10px;
+    background:linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06));
+    color:#fca5a5;
+    border-radius:var(--radius);
+    padding:14px 16px;
     font-size:12.5px;
-    color:#9AA6BC;
+    line-height:1.6;
+    text-align:left;
     margin-bottom:20px;
+    border:1px solid rgba(239,68,68,0.15);
+    backdrop-filter:blur(8px);
   }
-  .distance-tag b{color:#fff;}
+  .fail-reason svg{flex-shrink:0;margin-top:2px;}
+  .distance-tag{
+    font-size:13px;
+    color:#6b7280;
+    margin-bottom:22px;
+    font-weight:400;
+  }
+  .distance-tag b{color:#e2e8f0;}
   .fallback-box{
     width:100%;
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:12px;
-    padding:14px;
-    margin-bottom:14px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:16px;
     text-align:left;
+    backdrop-filter:blur(8px);
+    transition:var(--transition);
   }
-  .fallback-hint{ font-size:12px; color:#9AA6BC; margin:0 0 10px; line-height:1.6; }
-  .fallback-box .btn-outline-light{ margin-bottom:8px; }
-  .fallback-box .btn-outline-light:last-child{ margin-bottom:0; }
+  .fallback-box:hover{border-color:var(--glass-border-strong);}
+  .fallback-hint{ font-size:12.5px; color:#8b95a8; margin:0 0 12px; line-height:1.6; }
   .manual-code-input{
     width:100%;
-    background:rgba(255,255,255,0.06);
-    border:1.3px solid rgba(255,255,255,0.15);
-    border-radius:10px;
+    background:rgba(255,255,255,0.05);
+    border:1.5px solid rgba(255,255,255,0.12);
+    border-radius:var(--radius-sm);
     color:#fff;
     font-family:inherit;
-    font-size:16px;
-    letter-spacing:3px;
+    font-size:18px;
+    letter-spacing:8px;
     text-align:center;
-    padding:12px;
-    margin-bottom:8px;
+    padding:14px;
+    margin-bottom:10px;
     outline:none;
+    transition:var(--transition);
+    font-weight:600;
   }
-  .manual-code-input:focus{ border-color:var(--gold-500); }
+  .manual-code-input:focus{
+    border-color:var(--gold-400);
+    box-shadow:0 0 0 3px rgba(212,175,55,0.15), 0 0 20px rgba(212,175,55,0.1);
+    background:rgba(255,255,255,0.08);
+  }
+  .manual-code-input::placeholder{color:#4b5563;letter-spacing:2px;font-size:14px;font-weight:400;}
   .manual-code-error{
-    color:#F0A897;
-    font-size:12px;
+    color:#fca5a5;
+    font-size:12.5px;
     text-align:center;
-    margin:-2px 0 10px;
+    margin:-4px 0 12px;
     display:none;
+    font-weight:500;
   }
-  .manual-code-error.show{ display:block; }
+  .manual-code-error.show{ display:block; animation:shake 0.4s ease; }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
   .pending-tag-dark{
     display:inline-flex;
     align-items:center;
-    gap:6px;
-    font-size:12px;
-    font-weight:500;
-    color:var(--gold-500);
-    background:rgba(201,162,39,0.12);
-    padding:6px 12px;
-    border-radius:20px;
+    gap:8px;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--gold-400);
+    background:linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08));
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid rgba(212,175,55,0.2);
+    box-shadow:0 2px 12px rgba(212,175,55,0.1);
+    animation:tagPulse 2s ease-in-out infinite;
+  }
+  @keyframes tagPulse{
+    0%,100%{box-shadow:0 2px 12px rgba(212,175,55,0.1);}
+    50%{box-shadow:0 2px 20px rgba(212,175,55,0.2);}
   }
   .block-box{
     width:100%;
-    background:rgba(179,67,46,0.12);
-    border:1px solid rgba(179,67,46,0.35);
-    border-radius:12px;
-    padding:14px;
-    margin-bottom:14px;
+    background:linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.04));
+    border:1px solid rgba(239,68,68,0.2);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:16px;
     text-align:left;
+    backdrop-filter:blur(8px);
   }
-  .block-box p{ font-size:12.5px; color:#F0A897; margin:0; line-height:1.6; }
+  .block-box p{ font-size:13px; color:#fca5a5; margin:0; line-height:1.6; font-weight:500; }
   .checkout-badge{
     display:inline-flex;
     align-items:center;
     gap:6px;
-    font-size:11.5px;
-    font-weight:600;
-    color:var(--navy-900);
-    background:var(--gold-500);
-    padding:4px 10px;
-    border-radius:20px;
-    margin-bottom:10px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--navy-950);
+    background:linear-gradient(135deg, var(--gold-400), var(--gold-500));
+    padding:5px 14px;
+    border-radius:999px;
+    margin-bottom:12px;
+    box-shadow:0 4px 16px rgba(212,175,55,0.3);
+    animation:badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes badgePop{
+    from{transform:scale(0.5); opacity:0;}
+    to{transform:scale(1); opacity:1;}
   }
 
-  /* ---------- SURVEY VIEW ---------- */
+  /* SURVEY VIEW */
   .survey-body{
     flex:1;
     display:flex;
     flex-direction:column;
     overflow-y:auto;
-    padding-right:2px;
+    padding-right:4px;
   }
-  .survey-body::-webkit-scrollbar{ width:4px; }
-  .survey-body::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.15); border-radius:10px; }
-  .survey-head{ text-align:center; margin-bottom:18px; padding-top:6px; }
+  .survey-body::-webkit-scrollbar{ width:5px; }
+  .survey-body::-webkit-scrollbar-track{ background:transparent; }
+  .survey-body::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.1); border-radius:10px; }
+  .survey-body::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,0.2); }
+  .survey-head{ text-align:center; margin-bottom:22px; padding-top:8px; }
   .survey-head h3{
     font-family:'Noto Serif Thai',serif;
     font-weight:600;
-    font-size:17px;
-    margin:0 0 6px;
+    font-size:18px;
+    margin:0 0 8px;
+    background:linear-gradient(135deg, #fff 0%, var(--gold-200) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
   }
-  .survey-head p{ font-size:12.5px; color:#9AA6BC; margin:0; line-height:1.55; }
+  .survey-head p{ font-size:13px; color:#8b95a8; margin:0; line-height:1.65; }
 
-  .survey-q{ margin-bottom:20px; }
+  .survey-q{ margin-bottom:24px; }
   .survey-q label{
     display:block;
-    font-size:13px;
-    font-weight:500;
-    color:#fff;
-    margin-bottom:10px;
+    font-size:13.5px;
+    font-weight:600;
+    color:#e2e8f0;
+    margin-bottom:12px;
   }
-  .star-row{ display:flex; gap:8px; justify-content:center; }
+  .star-row{ display:flex; gap:10px; justify-content:center; }
   .star-btn{
     background:none;
     border:none;
     cursor:pointer;
-    padding:2px;
+    padding:4px;
     line-height:0;
+    transition:var(--transition);
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));
   }
-  .star-btn svg{ width:32px; height:32px; transition:transform .1s ease; }
-  .star-btn:active svg{ transform:scale(0.85); }
-  .star-btn svg .star-fill{ fill:rgba(255,255,255,0.12); stroke:rgba(255,255,255,0.3); stroke-width:1.5; transition:fill .15s ease, stroke .15s ease; }
-  .star-btn.selected svg .star-fill{ fill:var(--gold-500); stroke:var(--gold-500); }
-  .star-label{ text-align:center; font-size:12px; color:var(--gold-500); font-weight:500; margin-top:8px; min-height:16px; }
+  .star-btn:hover{ transform:scale(1.2) rotate(-5deg); }
+  .star-btn:active{ transform:scale(0.9); }
+  .star-btn svg{ width:36px; height:36px; transition:var(--transition); }
+  .star-btn svg .star-fill{ fill:rgba(255,255,255,0.08); stroke:rgba(255,255,255,0.25); stroke-width:1.5; transition:var(--transition); }
+  .star-btn.selected svg{ filter:drop-shadow(0 0 8px rgba(212,175,55,0.5)); animation:starPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .star-btn.selected svg .star-fill{ fill:var(--gold-400); stroke:var(--gold-300); }
+  @keyframes starPop{
+    0%{transform:scale(0.5) rotate(-20deg);}
+    70%{transform:scale(1.2) rotate(5deg);}
+    100%{transform:scale(1) rotate(0);}
+  }
+  .star-label{ 
+    text-align:center; 
+    font-size:13px; 
+    color:var(--gold-300); 
+    font-weight:600; 
+    margin-top:10px; 
+    min-height:18px;
+    text-shadow:0 0 20px rgba(212,175,55,0.3);
+    transition:var(--transition);
+  }
 
   .survey-textarea{
     width:100%;
-    min-height:74px;
-    background:rgba(255,255,255,0.06);
-    border:1.3px solid rgba(255,255,255,0.15);
-    border-radius:10px;
+    min-height:90px;
+    background:rgba(255,255,255,0.04);
+    border:1.5px solid rgba(255,255,255,0.1);
+    border-radius:var(--radius-sm);
     color:#fff;
     font-family:inherit;
-    font-size:13px;
-    padding:10px 12px;
+    font-size:13.5px;
+    padding:12px 14px;
     resize:vertical;
     outline:none;
+    transition:var(--transition);
+    line-height:1.6;
   }
-  .survey-textarea::placeholder{ color:#6E7893; }
-  .survey-textarea:focus{ border-color:var(--gold-500); }
+  .survey-textarea::placeholder{ color:#4b5563; }
+  .survey-textarea:focus{ 
+    border-color:var(--gold-400); 
+    box-shadow:0 0 0 3px rgba(212,175,55,0.1), 0 0 20px rgba(212,175,55,0.05);
+    background:rgba(255,255,255,0.06);
+  }
 
   .survey-count-note{
     display:flex;
     align-items:center;
-    gap:8px;
-    background:rgba(255,255,255,0.06);
-    border-radius:10px;
-    padding:10px 12px;
-    font-size:12px;
-    color:#9AA6BC;
-    margin-bottom:20px;
+    gap:10px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-sm);
+    padding:12px 14px;
+    font-size:12.5px;
+    color:#8b95a8;
+    margin-bottom:24px;
+    backdrop-filter:blur(8px);
   }
-  .survey-count-note b{ color:#fff; font-family:'JetBrains Mono',monospace; }
+  .survey-count-note b{ color:#f1f5f9; font-family:'JetBrains Mono',monospace; font-weight:600; }
 
   .survey-error{
-    color:#F0A897;
-    font-size:12px;
+    color:#fca5a5;
+    font-size:13px;
     text-align:center;
-    margin:-8px 0 12px;
+    margin:-10px 0 14px;
     display:none;
+    font-weight:500;
+    animation:shake 0.4s ease;
   }
   .survey-error.show{ display:block; }
 
@@ -617,26 +830,32 @@
   .back-link{
     display:flex;
     align-items:center;
-    gap:6px;
-    font-size:13px;
+    gap:8px;
+    font-size:13.5px;
     font-weight:500;
     color:var(--ink-soft);
     text-decoration:none;
+    transition:var(--transition);
+    padding:6px 10px;
+    border-radius:var(--radius-sm);
   }
-  .back-link:hover{color:var(--navy-800);}
+  .back-link:hover{color:var(--navy-800); background:rgba(0,0,0,0.04);}
   .top-bar-row{
     width:100%;
-    max-width:420px;
+    max-width:440px;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom:18px;
+    margin-bottom:20px;
+    padding:16px 18px 0;
+    position:relative;
+    z-index:2;
   }
   .logout-link{
     display:flex;
     align-items:center;
-    gap:5px;
-    font-size:12.5px;
+    gap:6px;
+    font-size:13px;
     font-weight:500;
     color:var(--ink-soft);
     text-decoration:none;
@@ -644,10 +863,58 @@
     border:none;
     cursor:pointer;
     font-family:inherit;
-    padding:0;
+    padding:6px 10px;
+    border-radius:var(--radius-sm);
+    transition:var(--transition);
   }
-  .logout-link:hover{color:var(--red);}
+  .logout-link:hover{color:var(--red); background:rgba(239,68,68,0.06);}
+
+  /* MOBILE FULLSCREEN MODE */
+  @media (max-width:640px){
+    body{ background:#000; align-items:stretch; }
+    body::before{display:none;}
+    .phone{ 
+      width:100%; 
+      height:100vh; 
+      border-radius:0; 
+      box-shadow:none; 
+      margin:0; 
+      padding:0;
+      background:var(--navy-950);
+    }
+    .screen{ border-radius:0; }
+    .notch{ display:none; }
+    .topbar{ padding:18px 18px 12px; }
+    .top-bar-row{ max-width:none; padding:14px 18px; background:var(--navy-950); margin-bottom:0; position:sticky; top:0; z-index:50; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .back-link{ color:#fff; }
+    .back-link svg{ stroke:#fff; }
+    .logout-link{ color:#9ca3af; }
+    .view{padding:0 18px 18px;}
+  }
+
+  /* Shimmer loading effect for dynamic content */
+  .shimmer{
+    background:linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size:200% 100%;
+    animation:shimmerMove 1.5s infinite;
+    border-radius:6px;
+  }
+  @keyframes shimmerMove{
+    0%{background-position:200% 0;}
+    100%{background-position:-200% 0;}
+  }
+
+  /* Scroll reveal */
+  .reveal{
+    opacity:0;
+    transform:translateY(20px);
+    animation:revealUp 0.6s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  @keyframes revealUp{
+    to{opacity:1;transform:translateY(0);}
+  }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -662,14 +929,6 @@
   </button>
 </div>
 
-<div class="switcher" id="switcher">
-  <button data-view="scan" class="active">1. สแกน QR</button>
-  <button data-view="verify">2. ยืนยันตำแหน่ง</button>
-  <button data-view="success">3a. สำเร็จ</button>
-  <button data-view="fail">3b. อยู่นอกพื้นที่</button>
-  <button data-view="survey">4. แบบประเมิน</button>
-</div>
-
 <div class="phone">
   <div class="screen">
     <div class="notch"></div>
@@ -679,7 +938,7 @@
         <h2 id="topTitle">สแกน QR เช็คชื่อ</h2>
         <div class="sub" id="topSub">วิชา การเขียนโปรแกรมเว็บ · Sec 1</div>
       </div>
-      <div class="close-btn">
+      <div class="close-btn" onclick="window.location.href='Student.html'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </div>
     </div>
@@ -764,7 +1023,6 @@
         </div>
         <div class="distance-tag" id="failDistanceTag">ห่างจากจุดเช็คชื่อประมาณ <b>85 เมตร</b> (รัศมีที่กำหนด <span id="configuredRadius">50</span> เมตร)</div>
 
-        <!-- Fallback options shown depending on failure reason -->
         <div id="failFallbackBox" class="fallback-box" style="display:none;">
           <p class="fallback-hint" id="fallbackHint"></p>
           <button class="btn-outline-light" id="manualCodeBtn" style="display:none;">กรอกรหัสกิจกรรมด้วยตนเอง</button>
@@ -847,7 +1105,6 @@
 
 <script>
   const views = document.querySelectorAll('.view');
-  const btns = document.querySelectorAll('.switcher button');
   let currentEventName = 'กิจกรรม';
   const titleMap = {
     scan: ['สแกน QR เช็คชื่อ', ''],
@@ -860,9 +1117,6 @@
   function goto(name){
     views.forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
-    btns.forEach(b => b.classList.remove('active'));
-    const match = document.querySelector('.switcher button[data-view="' + name + '"]');
-    if(match) match.classList.add('active');
     document.getElementById('topTitle').textContent = titleMap[name][0];
     document.getElementById('topSub').textContent = titleMap[name][1] || currentEventName;
 
@@ -874,29 +1128,26 @@
     }
   }
 
-  btns.forEach(b => b.addEventListener('click', () => goto(b.dataset.view)));
   document.querySelectorAll('[data-goto]').forEach(el => {
-    if (el.id === 'goCheckoutBtn') return; // has its own handler below
+    if (el.id === 'goCheckoutBtn') return;
     el.addEventListener('click', () => goto(el.dataset.goto));
   });
 
-  // ---------- Core state ----------
   let currentEventId = null;
   let currentEvent = null;
   let systemConfig = { requireCheckout: true, minAttendPercent: 80, multiScanEnabled: true, scanCooldownMinutes: 5 };
   let currentUser = null;
-  let scanStage = "checkin"; // "checkin" | "checkout"
-  let pendingFailReason = null; // "geo" | "camera" | "network"
+  let scanStage = "checkin";
+  let pendingFailReason = null;
   let cameraStream = null;
   let scanLoopHandle = null;
-  let qrHasFired = false; // prevents double-triggering once a valid code is found
+  let qrHasFired = false;
 
   function getSessionUser() {
     try { return JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { return null; }
   }
 
   function timesOverlap(aStart, aEnd, bStart, bEnd) {
-    // date-agnostic: compares HH:MM strings, only meaningful when both events are same-day (checked by caller)
     if (!aStart || !aEnd || !bStart || !bEnd) return false;
     return aStart < bEnd && bStart < aEnd;
   }
@@ -905,84 +1156,51 @@
     try {
       const res = await window.storage.get("attendance-records", true);
       return res ? JSON.parse(res.value) : [];
-    } catch (e) {
-      return [];
-    }
+    } catch (e) { return []; }
   }
 
   async function saveAllAttendanceRecords(records) {
     try {
       await window.storage.set("attendance-records", JSON.stringify(records), true);
       return true;
-    } catch (e) {
-      console.error("บันทึกข้อมูลการเช็คชื่อไม่สำเร็จ", e);
-      return false;
-    }
+    } catch (e) { console.error("บันทึกข้อมูลการเช็คชื่อไม่สำเร็จ", e); return false; }
   }
 
-  // Recomputes the event's kpiAttendActual from real attendance-records (only records
-  // marked isAttendSuccess count), so Reports.html reflects actual check-ins rather
-  // than survey submission counts.
   async function syncEventAttendanceCount(eventId, allRecords) {
     try {
       const successCount = allRecords.filter(r => r.eventId === eventId && r.isAttendSuccess).length;
       const res = await window.storage.get("events-list", true);
       const events = res ? JSON.parse(res.value) : [];
       const idx = events.findIndex(e => e.id === eventId);
-      if (idx !== -1) {
-        events[idx].kpiAttendActual = successCount;
-        await window.storage.set("events-list", JSON.stringify(events), true);
-      }
-    } catch (e) {
-      console.error("อัปเดตยอดผู้เข้าร่วมของกิจกรรมไม่สำเร็จ", e);
-    }
+      if (idx !== -1) { events[idx].kpiAttendActual = successCount; await window.storage.set("events-list", JSON.stringify(events), true); }
+    } catch (e) { console.error("อัปเดตยอดผู้เข้าร่วมไม่สำเร็จ", e); }
   }
 
-  // Load the real event this scan is for, based on ?event=<id> in the URL.
   async function loadEventFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
     currentEventId = eventId;
     currentUser = getSessionUser();
 
-    // Load admin-configured defaults
     try {
       const cfgRes = await window.storage.get("system-config", true);
-      if (cfgRes) {
-        const cfg = JSON.parse(cfgRes.value);
-        systemConfig = { ...systemConfig, ...cfg };
-      }
-    } catch (e) {
-      console.error("โหลด system-config ไม่สำเร็จ (จะใช้ค่าเริ่มต้น)", e);
-    }
+      if (cfgRes) { const cfg = JSON.parse(cfgRes.value); systemConfig = { ...systemConfig, ...cfg }; }
+    } catch (e) {}
 
-    if (!eventId) {
-      document.getElementById('topSub').textContent = currentEventName;
-      return;
-    }
+    if (!eventId) { document.getElementById('topSub').textContent = currentEventName; return; }
     try {
       const res = await window.storage.get("events-list", true);
       const events = res ? JSON.parse(res.value) : [];
       const ev = events.find(e => e.id === eventId);
-      if (!ev) {
-        document.getElementById('topSub').textContent = currentEventName;
-        return;
-      }
-      currentEvent = ev;
-      currentEventName = ev.title || currentEventName;
+      if (!ev) { document.getElementById('topSub').textContent = currentEventName; return; }
+      currentEvent = ev; currentEventName = ev.title || currentEventName;
       document.getElementById('topSub').textContent = currentEventName;
       const radiusEl = document.getElementById('configuredRadius');
       if (radiusEl && ev.geoRadius) radiusEl.textContent = ev.geoRadius;
-
       await determineScanStage();
-    } catch (e) {
-      console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
-      document.getElementById('topSub').textContent = currentEventName;
-      pendingFailReason = "network";
-    }
+    } catch (e) { console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e); document.getElementById('topSub').textContent = currentEventName; pendingFailReason = "network"; }
   }
 
-  // Decide whether this scan should be check-in or check-out, and block if not allowed.
   async function determineScanStage() {
     if (!currentEvent || !currentUser) return;
     const requireCheckout = currentEvent.requireCheckout !== undefined ? currentEvent.requireCheckout : systemConfig.requireCheckout;
@@ -994,7 +1212,6 @@
       document.getElementById('scanActionHint').innerHTML = 'ท่านเช็คชื่อ "เข้า" ไปแล้ว<br>สแกนอีกครั้งเพื่อเช็คชื่อ "ออก"';
       document.getElementById('simulateScanBtn').textContent = "จำลองการสแกนออกสำเร็จ →";
     } else if (myRecord && myRecord.checkInTime && (!requireCheckout || myRecord.checkOutTime)) {
-      // Already fully checked in (and out, if required) — block duplicate scan
       scanStage = "blocked-duplicate";
       showScanBlocked("ท่านเช็คชื่อกิจกรรมนี้ไปแล้ว ระบบไม่รองรับการสแกนซ้ำเกินรอบที่กำหนด");
     } else {
@@ -1009,30 +1226,24 @@
     const scanAction = document.querySelector('.scan-action');
     if (camWrap) camWrap.style.display = 'none';
     if (scanAction) {
-      scanAction.innerHTML = `
-        <div class="block-box"><p>${message}</p></div>
-        <button class="btn-outline-light" onclick="window.location.href='Student.html'">กลับหน้าหลัก</button>
-      `;
+      scanAction.innerHTML = `<div class="block-box"><p>${message}</p></div><button class="btn-outline-light" onclick="window.location.href='Student.html'">กลับหน้าหลัก</button>`;
     }
   }
 
-  // ---------- Real camera + QR decoding ----------
   async function startCamera() {
     const video = document.getElementById('camVideo');
     const canvas = document.getElementById('camCanvas');
     const hint = document.getElementById('camHint');
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      if (hint) { hint.textContent = 'อุปกรณ์นี้ไม่รองรับกล้อง ใช้ปุ่ม "จำลองการสแกนสำเร็จ" แทนได้'; hint.classList.add('error'); }
+      if (hint) { hint.textContent = 'อุปกรณ์นี้ไม่รองรับกล้อง ใช้ปุ่มด้านล่างแทนได้'; hint.classList.add('error'); }
       return;
     }
     if (typeof jsQR === 'undefined') {
-      // Give the fallback CDN script (loaded on DOMContentLoaded) a brief moment to finish,
-      // since the user just tapped "start camera" and jsQR might still be arriving.
       if (hint) { hint.textContent = 'กำลังโหลดตัวอ่าน QR...'; hint.classList.remove('error'); }
       await new Promise(r => setTimeout(r, 1200));
       if (typeof jsQR === 'undefined') {
-        if (hint) { hint.textContent = 'โหลดตัวอ่าน QR ไม่สำเร็จ (เช็คอินเทอร์เน็ต) ใช้ปุ่ม "จำลองการสแกนสำเร็จ" แทนได้'; hint.classList.add('error'); }
+        if (hint) { hint.textContent = 'โหลดตัวอ่าน QR ไม่สำเร็จ ใช้ปุ่มด้านล่างแทนได้'; hint.classList.add('error'); }
         return;
       }
     }
@@ -1040,13 +1251,9 @@
       if (hint) { hint.textContent = 'หน้านี้ต้องเปิดผ่าน HTTPS กล้องถึงจะทำงานได้'; hint.classList.add('error'); }
       return;
     }
-
     try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-      });
-      video.srcObject = cameraStream;
-      await video.play();
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      video.srcObject = cameraStream; await video.play();
       const existingBtn = document.getElementById('camRetryBtn');
       if (existingBtn) existingBtn.remove();
       if (hint) { hint.textContent = 'จัดกรอบให้ตรง QR Code หน้าห้องเรียน'; hint.classList.remove('error'); }
@@ -1054,9 +1261,7 @@
     } catch (err) {
       const debugMsg = (err && err.name) ? `${err.name}: ${err.message || ''}` : String(err);
       if (hint) {
-        hint.textContent = err.name === 'NotAllowedError'
-          ? 'กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง แล้วแตะปุ่มด้านล่างเพื่อลองใหม่'
-          : `เปิดกล้องไม่สำเร็จ (${debugMsg}) — แตะปุ่มด้านล่างเพื่อลองใหม่`;
+        hint.textContent = err.name === 'NotAllowedError' ? 'กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง' : `เปิดกล้องไม่สำเร็จ (${debugMsg})`;
         hint.classList.add('error');
       }
       showCameraRetryButton();
@@ -1067,226 +1272,108 @@
     const wrap = document.querySelector('.cam-wrap');
     if (!wrap || document.getElementById('camRetryBtn')) return;
     const btn = document.createElement('button');
-    btn.id = 'camRetryBtn';
-    btn.className = 'btn-gold';
-    btn.textContent = '📷 แตะเพื่อเปิดกล้อง';
+    btn.id = 'camRetryBtn'; btn.className = 'btn-gold'; btn.textContent = '📷 แตะเพื่อเปิดกล้อง';
     btn.style.cssText = 'position:relative; z-index:2; margin-top:10px;';
-    btn.addEventListener('click', () => {
-      btn.remove();
-      const hint = document.getElementById('camHint');
-      if (hint) { hint.textContent = 'กำลังขออนุญาตเข้าถึงกล้อง...'; hint.classList.remove('error'); }
-      startCamera();
-    });
+    btn.addEventListener('click', () => { btn.remove(); const hint = document.getElementById('camHint'); if (hint) { hint.textContent = 'กำลังขออนุญาตเข้าถึงกล้อง...'; hint.classList.remove('error'); } startCamera(); });
     wrap.appendChild(btn);
   }
 
   function stopCamera() {
     if (scanLoopHandle) cancelAnimationFrame(scanLoopHandle);
     scanLoopHandle = null;
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(t => t.stop());
-      cameraStream = null;
-    }
+    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
   }
 
   function scanFrame() {
     const video = document.getElementById('camVideo');
     const canvas = document.getElementById('camCanvas');
-    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      scanLoopHandle = requestAnimationFrame(scanFrame);
-      return;
-    }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) { scanLoopHandle = requestAnimationFrame(scanFrame); return; }
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-
-    if (code && code.data && !qrHasFired) {
-      handleQrDetected(code.data);
-    } else {
-      scanLoopHandle = requestAnimationFrame(scanFrame);
-    }
+    if (code && code.data && !qrHasFired) { handleQrDetected(code.data); }
+    else { scanLoopHandle = requestAnimationFrame(scanFrame); }
   }
 
   function handleQrDetected(rawText) {
-    qrHasFired = true;
-    stopCamera();
-
-    // The event's QR encodes JSON like {"eventId":"...", ...} (matches how QR codes are
-    // generated elsewhere in the app via api.qrserver.com). Accept either JSON or a plain event id string.
+    qrHasFired = true; stopCamera();
     let scannedEventId = null;
-    try {
-      const parsed = JSON.parse(rawText);
-      scannedEventId = parsed.eventId || parsed.CourseID || parsed.SessionID || null;
-    } catch (e) {
-      scannedEventId = rawText.trim();
-    }
-
-    if (!currentEventId) {
-      // No event specified in the URL — trust whatever the QR contains.
-      currentEventId = scannedEventId;
-      goto('verify');
-      runVerification();
-      return;
-    }
-
-    if (scannedEventId && scannedEventId === currentEventId) {
-      goto('verify');
-      runVerification();
-    } else {
-      resolveFail('wrong-qr');
-    }
+    try { const parsed = JSON.parse(rawText); scannedEventId = parsed.eventId || parsed.CourseID || parsed.SessionID || null; }
+    catch (e) { scannedEventId = rawText.trim(); }
+    if (!currentEventId) { currentEventId = scannedEventId; goto('verify'); runVerification(); return; }
+    if (scannedEventId && scannedEventId === currentEventId) { goto('verify'); runVerification(); }
+    else { resolveFail('wrong-qr'); }
   }
 
   loadEventFromUrl().then(() => {
     if (scanStage !== 'blocked-duplicate') {
-      // iOS Safari (and some other mobile browsers) block/silently fail getUserMedia
-      // when it isn't triggered directly by a user tap. Show a tap-to-start button
-      // instead of auto-starting, so the permission prompt reliably appears.
       const hint = document.getElementById('camHint');
       if (hint) hint.textContent = 'แตะปุ่มด้านล่างเพื่อเปิดกล้องสแกน QR';
       showCameraRetryButton();
     }
   });
-
   window.addEventListener('beforeunload', stopCamera);
-</script>
 
-<script>
-  // ---------- Survey (post-check-in satisfaction form) ----------
   let selectedStars = 0;
   const starLabels = { 1: "ควรปรับปรุง", 2: "พอใช้", 3: "ปานกลาง", 4: "ดี", 5: "ดีมาก" };
-
   document.querySelectorAll("#starRow .star-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       selectedStars = Number(btn.dataset.star);
-      document.querySelectorAll("#starRow .star-btn").forEach(b => {
-        b.classList.toggle("selected", Number(b.dataset.star) <= selectedStars);
-      });
+      document.querySelectorAll("#starRow .star-btn").forEach(b => { b.classList.toggle("selected", Number(b.dataset.star) <= selectedStars); });
       document.getElementById("starLabel").textContent = starLabels[selectedStars] || "";
       document.getElementById("surveyError").classList.remove("show");
     });
   });
 
-  async function getSessionUser() {
-    try { return JSON.parse(localStorage.getItem("ubu_session")); } catch (e) { return null; }
-  }
-
   async function loadAttendCountDisplay() {
     const el = document.getElementById("surveyAttendCount");
     if (!currentEventId) { el.textContent = "-"; return; }
-    try {
-      const res = await window.storage.get("responses:" + currentEventId, true);
-      const responses = res ? JSON.parse(res.value) : [];
-      el.textContent = responses.length;
-    } catch (e) {
-      el.textContent = "-";
-    }
+    try { const res = await window.storage.get("responses:" + currentEventId, true); const responses = res ? JSON.parse(res.value) : []; el.textContent = responses.length; }
+    catch (e) { el.textContent = "-"; }
   }
 
   document.getElementById("submitSurveyBtn").addEventListener("click", async () => {
     const errorEl = document.getElementById("surveyError");
-    if (selectedStars === 0) {
-      errorEl.classList.add("show");
-      return;
-    }
+    if (selectedStars === 0) { errorEl.classList.add("show"); return; }
     errorEl.classList.remove("show");
-
     const comment = document.getElementById("surveyComment").value.trim();
-    const session = await getSessionUser();
-
+    const session = getSessionUser();
     if (!currentEventId) {
-      // No specific event context (opened Scan.html directly) — just show thanks without saving.
-      goto("survey");
-      document.getElementById("surveyForm").style.display = "none";
-      document.getElementById("surveyThanks").style.display = "flex";
-      return;
+      goto("survey"); document.getElementById("surveyForm").style.display = "none"; document.getElementById("surveyThanks").style.display = "flex"; return;
     }
-
     try {
-      // Save this individual response
       const key = "responses:" + currentEventId;
       const res = await window.storage.get(key, true);
       const responses = res ? JSON.parse(res.value) : [];
-      responses.push({
-        rating: selectedStars,
-        comment: comment,
-        respondent: session ? session.name : "ไม่ระบุ",
-        submittedAt: new Date().toISOString()
-      });
+      responses.push({ rating: selectedStars, comment: comment, respondent: session ? session.name : "ไม่ระบุ", submittedAt: new Date().toISOString() });
       await window.storage.set(key, JSON.stringify(responses), true);
-
-      // Recalculate the event's satisfaction KPI (attendance count is now tracked
-      // separately from real check-in/check-out records, not survey submissions).
       const eventsRes = await window.storage.get("events-list", true);
       const events = eventsRes ? JSON.parse(eventsRes.value) : [];
       const idx = events.findIndex(e => e.id === currentEventId);
-      if (idx !== -1) {
-        const avgRating = responses.reduce((sum, r) => sum + r.rating, 0) / responses.length;
-        events[idx].kpiSatActual = avgRating.toFixed(1);
-        await window.storage.set("events-list", JSON.stringify(events), true);
-      }
-    } catch (e) {
-      console.error("บันทึกแบบประเมินไม่สำเร็จ", e);
-    }
-
+      if (idx !== -1) { const avgRating = responses.reduce((sum, r) => sum + r.rating, 0) / responses.length; events[idx].kpiSatActual = avgRating.toFixed(1); await window.storage.set("events-list", JSON.stringify(events), true); }
+    } catch (e) { console.error("บันทึกแบบประเมินไม่สำเร็จ", e); }
     document.getElementById("surveyForm").style.display = "none";
     document.getElementById("surveyThanks").style.display = "flex";
   });
 
-  // Refresh the attendance count shown whenever the survey view becomes active
   const surveyViewEl = document.getElementById("view-survey");
-  new MutationObserver(() => {
-    if (surveyViewEl.classList.contains("active")) loadAttendCountDisplay();
-  }).observe(surveyViewEl, { attributes: true, attributeFilter: ["class"] });
-</script>
+  new MutationObserver(() => { if (surveyViewEl.classList.contains("active")) loadAttendCountDisplay(); }).observe(surveyViewEl, { attributes: true, attributeFilter: ["class"] });
 
-<script>
   (function enforceSession() {
     let session = null;
     try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
-
-    if (!session) {
-      window.location.href = "index.html";
-      return;
-    }
-    // Both participants (checking in) and organizers (testing the flow) may land here,
-    // so we don't force-redirect organizers/admins away from Scan.html.
+    if (!session) { window.location.href = "index.html"; return; }
   })();
 
-  document.getElementById("logout-link").addEventListener("click", () => {
-    localStorage.removeItem("ubu_session");
-    window.location.href = "index.html";
-  });
-</script>
+  document.getElementById("logout-link").addEventListener("click", () => { localStorage.removeItem("ubu_session"); window.location.href = "index.html"; });
 
-<script>
-  // ---------- Simulate-scan → verify → success/fail resolution ----------
-  document.getElementById('simulateScanBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    goto('verify');
-    await runVerification();
-  });
+  document.getElementById('simulateScanBtn').addEventListener('click', async (e) => { e.preventDefault(); goto('verify'); await runVerification(); });
 
   async function runVerification() {
-    // small delay to let the "verifying" animation show, mirroring the original UX
     await new Promise(r => setTimeout(r, 700));
-
-    if (!currentUser) {
-      window.location.href = 'index.html';
-      return;
-    }
-
-    // 1) Network / event lookup failure
-    if (pendingFailReason === "network" || !currentEventId) {
-      resolveFail("network");
-      return;
-    }
-
-    // 2) Time-overlap check (only relevant for check-in, same-day events)
+    if (!currentUser) { window.location.href = 'index.html'; return; }
+    if (pendingFailReason === "network" || !currentEventId) { resolveFail("network"); return; }
     if (scanStage === "checkin") {
       const records = await getAllAttendanceRecords();
       const myOtherRecords = records.filter(r => r.userEmail === currentUser.name && r.eventId !== currentEventId && r.checkInTime);
@@ -1297,65 +1384,36 @@
           const otherEvent = allEvents.find(ev => ev.id === rec.eventId);
           if (!otherEvent) continue;
           const sameDay = otherEvent.date && currentEvent.date && otherEvent.date === currentEvent.date;
-          if (sameDay && timesOverlap(currentEvent.startTime, currentEvent.endTime, otherEvent.startTime, otherEvent.endTime)) {
-            resolveFail("overlap", otherEvent.title);
-            return;
-          }
+          if (sameDay && timesOverlap(currentEvent.startTime, currentEvent.endTime, otherEvent.startTime, otherEvent.endTime)) { resolveFail("overlap", otherEvent.title); return; }
         }
-      } catch (err) {
-        console.error("ตรวจสอบเวลาทับซ้อนไม่สำเร็จ", err);
-      }
+      } catch (err) { console.error("ตรวจสอบเวลาทับซ้อนไม่สำเร็จ", err); }
     }
-
-    // 3) Real GPS check via the browser's Geolocation API, compared against the event's room coordinates.
     const geoResult = await checkRealLocation();
-    if (!geoResult.ok) {
-      resolveFail("geo", null, geoResult);
-      return;
-    }
-
+    if (!geoResult.ok) { resolveFail("geo", null, geoResult); return; }
     await resolveSuccess();
   }
 
-  // Reads the device's real GPS position and compares it to currentEvent.geoLat/geoLng using
-  // the Haversine formula. Requires HTTPS (or localhost) and user permission.
   function checkRealLocation() {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve({ ok: false, reason: "unsupported" });
-        return;
-      }
-      if (!currentEvent || !currentEvent.geoLat || !currentEvent.geoLng) {
-        // No room coordinates configured for this event — nothing to check against.
-        resolve({ ok: true });
-        return;
-      }
-
+      if (!navigator.geolocation) { resolve({ ok: false, reason: "unsupported" }); return; }
+      if (!currentEvent || !currentEvent.geoLat || !currentEvent.geoLng) { resolve({ ok: true }); return; }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const distanceMeters = haversineDistance(
-            pos.coords.latitude, pos.coords.longitude,
-            currentEvent.geoLat, currentEvent.geoLng
-          );
+          const distanceMeters = haversineDistance(pos.coords.latitude, pos.coords.longitude, currentEvent.geoLat, currentEvent.geoLng);
           const radius = currentEvent.geoRadius || systemConfig.defaultGeoRadius || 100;
           resolve({ ok: distanceMeters <= radius, distance: Math.round(distanceMeters), radius });
         },
-        (err) => {
-          // err.code: 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
-          resolve({ ok: false, reason: err.code === 1 ? "denied" : "unavailable" });
-        },
+        (err) => { resolve({ ok: false, reason: err.code === 1 ? "denied" : "unavailable" }); },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   }
 
   function haversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Earth radius in meters
+    const R = 6371000;
     const toRad = (d) => d * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    const dLat = toRad(lat2 - lat1); const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
@@ -1367,15 +1425,7 @@
 
     if (scanStage === "checkin") {
       const requireCheckout = currentEvent.requireCheckout !== undefined ? currentEvent.requireCheckout : systemConfig.requireCheckout;
-      myRecord = {
-        eventId: currentEventId,
-        userEmail: currentUser.name,
-        checkInTime: nowIso,
-        checkOutTime: null,
-        // Single-scan mode (no required checkout) counts as successful attendance immediately.
-        isAttendSuccess: requireCheckout ? false : true,
-        attendPercent: requireCheckout ? null : 100
-      };
+      myRecord = { eventId: currentEventId, userEmail: currentUser.name, checkInTime: nowIso, checkOutTime: null, isAttendSuccess: requireCheckout ? false : true, attendPercent: requireCheckout ? null : 100 };
       records.push(myRecord);
       await saveAllAttendanceRecords(records);
       await syncEventAttendanceCount(currentEventId, records);
@@ -1387,160 +1437,176 @@
       document.getElementById('successCheckinTime').textContent = nowLabel;
       document.getElementById('successCheckoutRow').style.display = 'none';
       document.getElementById('successPercentRow').style.display = 'none';
-      document.getElementById('successStatusBadge').textContent = 'เช็คชื่อเข้าแล้ว';
+      document.getElementById('successStatusBadge').textContent = 'เช็คชื่อตรงเวลา';
+      document.getElementById('successStatusBadge').className = 'badge-ontime';
+      document.getElementById('successStatusBadge').style = '';
       document.getElementById('successActionsCheckin').style.display = 'flex';
       document.getElementById('successActionsCheckout').style.display = 'none';
-    } else {
-      // checkout
-      const idx = records.findIndex(r => r.eventId === currentEventId && r.userEmail === currentUser.name);
-      if (idx !== -1) {
-        records[idx].checkOutTime = nowIso;
-        myRecord = records[idx];
+      goto('success');
+    } else if (scanStage === "checkout") {
+      if (!myRecord) { resolveFail('network'); return; }
+      myRecord.checkOutTime = nowIso;
+      const checkInDate = new Date(myRecord.checkInTime);
+      const checkOutDate = new Date(nowIso);
+      const diffMs = checkOutDate - checkInDate;
+      const diffMin = Math.floor(diffMs / 60000);
+      const eventStart = currentEvent.startTime ? parseTime(currentEvent.startTime) : null;
+      const eventEnd = currentEvent.endTime ? parseTime(currentEvent.endTime) : null;
+      let attendPercent = 100;
+      if (eventStart && eventEnd) {
+        const eventDurationMin = (eventEnd - eventStart) / 60000;
+        if (eventDurationMin > 0) {
+          attendPercent = Math.min(100, Math.round((diffMin / eventDurationMin) * 100));
+        }
       }
-
-      const requiredPercent = currentEvent.minAttendPercent !== undefined ? currentEvent.minAttendPercent : systemConfig.minAttendPercent;
-      let percent = null;
-      let success = true;
-      if (currentEvent.date && currentEvent.startTime && currentEvent.endTime && myRecord && myRecord.checkInTime) {
-        const dayStart = new Date(`${currentEvent.date}T${currentEvent.startTime}`);
-        const dayEnd = new Date(`${currentEvent.date}T${currentEvent.endTime}`);
-        const totalMs = Math.max(1, dayEnd - dayStart);
-        const inTime = new Date(myRecord.checkInTime);
-        const outTime = new Date(myRecord.checkOutTime);
-        const presentStart = inTime < dayStart ? dayStart : inTime;
-        const presentEnd = outTime > dayEnd ? dayEnd : outTime;
-        const presentMs = Math.max(0, presentEnd - presentStart);
-        percent = Math.min(100, Math.round((presentMs / totalMs) * 100));
-        success = percent >= requiredPercent;
-      }
-
-      if (idx !== -1) {
-        records[idx].attendPercent = percent;
-        records[idx].isAttendSuccess = success;
-        myRecord = records[idx];
-      }
+      myRecord.attendPercent = attendPercent;
+      const minPercent = currentEvent.minAttendPercent || systemConfig.minAttendPercent || 80;
+      myRecord.isAttendSuccess = attendPercent >= minPercent;
       await saveAllAttendanceRecords(records);
       await syncEventAttendanceCount(currentEventId, records);
 
       document.getElementById('checkoutBadge').style.display = 'inline-flex';
-      document.getElementById('successTitle').textContent = success ? 'เช็คชื่อ (ออก) สำเร็จ' : 'เช็คชื่อออกสำเร็จ แต่เวลาเข้าร่วมไม่ครบเกณฑ์';
-      document.getElementById('successSub').textContent = success
-        ? 'บันทึกการเข้าร่วมกิจกรรมของท่านครบสมบูรณ์แล้ว'
-        : `ท่านอยู่ในกิจกรรมไม่ถึงเกณฑ์ขั้นต่ำ ${requiredPercent}% ที่กำหนดไว้`;
+      document.getElementById('successTitle').textContent = 'เช็คชื่อ (ออก) สำเร็จ';
+      document.getElementById('successSub').textContent = 'บันทึกเวลาออกกิจกรรมของท่านเรียบร้อยแล้ว';
       document.getElementById('successEventName').textContent = currentEventName;
-      document.getElementById('successCheckinTime').textContent = myRecord && myRecord.checkInTime
-        ? new Date(myRecord.checkInTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-';
+      document.getElementById('successCheckinTime').textContent = new Date(myRecord.checkInTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
       document.getElementById('successCheckoutRow').style.display = 'flex';
       document.getElementById('successCheckoutTime').textContent = nowLabel;
-      if (percent !== null) {
-        document.getElementById('successPercentRow').style.display = 'flex';
-        document.getElementById('successPercent').textContent = `${percent}% (เกณฑ์ ${requiredPercent}%)`;
+      document.getElementById('successPercentRow').style.display = 'flex';
+      document.getElementById('successPercent').textContent = attendPercent + '% (' + diffMin + ' นาที)';
+
+      const badge = document.getElementById('successStatusBadge');
+      if (myRecord.isAttendSuccess) {
+        badge.textContent = 'เข้าร่วมครบตามเงื่อนไข';
+        badge.className = 'badge-ontime';
+        badge.style = '';
+      } else {
+        badge.textContent = 'เข้าร่วมไม่ครบตามเงื่อนไข';
+        badge.style.background = 'var(--red-100)';
+        badge.style.color = 'var(--red)';
       }
-      document.getElementById('successStatusBadge').textContent = success ? 'เข้าร่วมสำเร็จ' : 'เข้าร่วมไม่ครบเกณฑ์';
-      document.getElementById('successStatusBadge').style.background = success ? '' : 'var(--red)';
+
       document.getElementById('successActionsCheckin').style.display = 'none';
       document.getElementById('successActionsCheckout').style.display = 'flex';
+      goto('success');
     }
-
-    goto('success');
   }
 
-  function resolveFail(reason, extra, geoInfo) {
-    pendingFailReason = null;
+  function parseTime(t) {
+    if (!t) return null;
+    const [h, m] = t.split(':').map(Number);
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+  }
+
+  async function resolveFail(reason, overlapEventTitle, geoResult) {
+    goto('fail');
     const titleEl = document.getElementById('failTitle');
     const subEl = document.getElementById('failSub');
-    const reasonBox = document.getElementById('failReasonBox');
-    const reasonText = document.getElementById('failReasonText');
+    const reasonTextEl = document.getElementById('failReasonText');
     const distanceTag = document.getElementById('failDistanceTag');
     const fallbackBox = document.getElementById('failFallbackBox');
-    const fallbackHint = document.getElementById('fallbackHint');
-    const manualBtn = document.getElementById('manualCodeBtn');
-    const exceptionBtn = document.getElementById('requestExceptionBtn');
-    const defaultActions = document.getElementById('failActionsDefault');
+    const manualCodeBtn = document.getElementById('manualCodeBtn');
+    const requestExceptionBtn = document.getElementById('requestExceptionBtn');
+    const failActionsDefault = document.getElementById('failActionsDefault');
+    const manualCodeForm = document.getElementById('manualCodeForm');
+    const exceptionSentBox = document.getElementById('exceptionSentBox');
 
-    // reset visibility
-    document.getElementById('manualCodeForm').style.display = 'none';
-    document.getElementById('exceptionSentBox').style.display = 'none';
-    manualBtn.style.display = 'none';
-    exceptionBtn.style.display = 'none';
-    defaultActions.style.display = 'flex';
-    distanceTag.style.display = 'none';
-    fallbackBox.style.display = 'block';
+    fallbackBox.style.display = 'none';
+    manualCodeBtn.style.display = 'none';
+    requestExceptionBtn.style.display = 'none';
+    manualCodeForm.style.display = 'none';
+    exceptionSentBox.style.display = 'none';
+    failActionsDefault.style.display = 'flex';
+    distanceTag.style.display = 'block';
 
     if (reason === 'geo') {
       titleEl.textContent = 'อยู่นอกพื้นที่ที่กำหนด';
       subEl.textContent = 'ไม่สามารถบันทึกการเช็คชื่อได้';
-      reasonBox.style.display = 'flex';
-
-      if (geoInfo && geoInfo.reason === 'denied') {
-        reasonText.textContent = 'ท่านยังไม่ได้อนุญาตให้เว็บไซต์เข้าถึงตำแหน่ง กรุณาอนุญาต location permission ในเบราว์เซอร์แล้วลองใหม่';
-      } else if (geoInfo && geoInfo.reason === 'unsupported') {
-        reasonText.textContent = 'อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง (GPS)';
-      } else if (geoInfo && geoInfo.reason === 'unavailable') {
-        reasonText.textContent = 'ไม่สามารถอ่านค่าตำแหน่ง GPS ได้ในขณะนี้ กรุณาลองใหม่ในที่โล่งหรือเปิดสัญญาณ GPS ของอุปกรณ์';
-      } else {
-        reasonText.textContent = 'ตำแหน่งของท่านอยู่นอกรัศมี Geo-fencing ที่อาจารย์กำหนดไว้สำหรับกิจกรรมนี้';
+      reasonTextEl.textContent = 'ตำแหน่งของท่านอยู่นอกรัศมี Geo-fencing ที่อาจารย์กำหนดไว้สำหรับคาบเรียนนี้';
+      if (geoResult && typeof geoResult.distance === 'number') {
+        distanceTag.innerHTML = `ห่างจากจุดเช็คชื่อประมาณ <b>${geoResult.distance} เมตร</b> (รัศมีที่กำหนด <span id="configuredRadius">${geoResult.radius || 50}</span> เมตร)`;
       }
-
-      if (geoInfo && geoInfo.distance !== undefined) {
-        distanceTag.innerHTML = `ห่างจากจุดเช็คชื่อประมาณ <b>${geoInfo.distance} เมตร</b> (รัศมีที่กำหนด ${geoInfo.radius} เมตร)`;
-        distanceTag.style.display = 'block';
+      fallbackBox.style.display = 'block';
+      requestExceptionBtn.style.display = 'block';
+      if (currentEvent && currentEvent.manualCode) {
+        manualCodeBtn.style.display = 'block';
       }
-
-      fallbackHint.textContent = 'หากท่านอยู่ในพื้นที่จริงแต่ GPS คลาดเคลื่อน สามารถส่งคำขอเช็คชื่อกรณีพิเศษให้อาจารย์อนุมัติได้';
-      exceptionBtn.style.display = 'block';
-    } else if (reason === 'camera') {
-      titleEl.textContent = 'สแกน QR ไม่สำเร็จ';
-      subEl.textContent = 'กล้องหรือ QR Code อาจมีปัญหา';
-      reasonBox.style.display = 'flex';
-      reasonText.textContent = 'ไม่สามารถอ่านรหัส QR ได้ อาจเกิดจากกล้องอุปกรณ์ แสงสะท้อน หรือ QR Code หมดอายุ';
-      fallbackHint.textContent = 'ท่านสามารถกรอกรหัสกิจกรรมที่อาจารย์แจ้งหน้าห้องแทนการสแกนได้';
-      manualBtn.style.display = 'block';
-    } else if (reason === 'wrong-qr') {
-      titleEl.textContent = 'QR Code ไม่ตรงกับกิจกรรมนี้';
-      subEl.textContent = 'กรุณาสแกน QR ที่หน้าห้องเรียนของกิจกรรมนี้';
-      reasonBox.style.display = 'flex';
-      reasonText.textContent = 'รหัสที่สแกนได้ไม่ตรงกับกิจกรรมที่ท่านกำลังเช็คชื่ออยู่ กรุณาตรวจสอบว่าสแกน QR ถูกจุด';
-      fallbackHint.textContent = 'หาก QR Code หน้าห้องเรียนใช้งานไม่ได้ ท่านสามารถกรอกรหัสกิจกรรมแทนได้';
-      manualBtn.style.display = 'block';
+      document.getElementById('fallbackHint').textContent = 'หากท่านอยู่ในห้องเรียนแต่ระบบตรวจสอบไม่ผ่าน สามารถใช้ทางเลือกด้านล่างได้';
     } else if (reason === 'overlap') {
-      titleEl.textContent = 'ไม่สามารถเช็คชื่อได้';
-      subEl.textContent = 'พบกิจกรรมที่เวลาทับซ้อนกัน';
-      reasonBox.style.display = 'flex';
-      reasonText.textContent = `ท่านเช็คชื่อเข้าร่วมกิจกรรม "${extra || 'อื่น'}" ไว้แล้ว ซึ่งมีช่วงเวลาทับซ้อนกับกิจกรรมนี้ ระบบไม่อนุญาตให้เช็คชื่อสองกิจกรรมที่เวลาเดียวกัน`;
-      fallbackBox.style.display = 'none';
-    } else {
-      // network / lookup failure
-      titleEl.textContent = 'บันทึกข้อมูลไม่สำเร็จ';
-      subEl.textContent = 'อาจมีปัญหาการเชื่อมต่ออินเทอร์เน็ต';
-      reasonBox.style.display = 'flex';
-      reasonText.textContent = 'ไม่สามารถเชื่อมต่อเพื่อบันทึกการเช็คชื่อได้ในขณะนี้ กรุณาลองใหม่อีกครั้งเมื่อสัญญาณอินเทอร์เน็ตกลับมาปกติ';
-      fallbackHint.textContent = 'ระบบจะไม่บันทึกเวลาเช็คชื่อจนกว่าจะเชื่อมต่อสำเร็จ เพื่อป้องกันข้อมูลผิดพลาด';
+      titleEl.textContent = 'เวลาเรียนทับซ้อน';
+      subEl.textContent = 'ไม่สามารถเช็คชื่อได้';
+      reasonTextEl.textContent = `ท่านมีกิจกรรม "${overlapEventTitle || 'อื่น'}" ที่เวลาเรียนทับซ้อนกันในขณะนี้`;
+      distanceTag.style.display = 'none';
+    } else if (reason === 'wrong-qr') {
+      titleEl.textContent = 'QR Code ไม่ตรงกัน';
+      subEl.textContent = 'ไม่สามารถบันทึกการเช็คชื่อได้';
+      reasonTextEl.textContent = 'รหัสกิจกรรมจาก QR Code ไม่ตรงกับกิจกรรมที่เลือกไว้';
+      distanceTag.style.display = 'none';
+    } else if (reason === 'network') {
+      titleEl.textContent = 'ไม่สามารถตรวจสอบข้อมูลได้';
+      subEl.textContent = 'กรุณาลองใหม่อีกครั้ง';
+      reasonTextEl.textContent = 'ระบบไม่สามารถโหลดข้อมูลกิจกรรมหรือบันทึกการเช็คชื่อได้ อาจเนื่องจากการเชื่อมต่ออินเทอร์เน็ต';
+      distanceTag.style.display = 'none';
+    } else if (reason === 'blocked-duplicate') {
+      titleEl.textContent = 'ไม่สามารถเช็คชื่อซ้ำได้';
+      subEl.textContent = 'ท่านได้เช็คชื่อกิจกรรมนี้ไปแล้ว';
+      reasonTextEl.textContent = 'ระบบไม่รองรับการสแกนซ้ำเกินรอบที่กำหนด';
+      distanceTag.style.display = 'none';
     }
-
-    goto('fail');
   }
 
-  // Camera-fail simulation entry point (kept accessible; original mock only had one "simulate success" path)
-  document.getElementById('simulateScanBtn').addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    goto('verify');
-    setTimeout(() => resolveFail('camera'), 500);
+  // Event listeners
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', () => goto(el.dataset.goto));
   });
 
-  // ---------- Fallback: manual event code ----------
+  document.getElementById('goCheckoutBtn').addEventListener('click', async () => {
+    scanStage = 'checkout';
+    document.getElementById('scanActionHint').innerHTML = 'ท่านเช็คชื่อ "เข้า" ไปแล้ว<br>สแกนอีกครั้งเพื่อเช็คชื่อ "ออก"';
+    document.getElementById('simulateScanBtn').textContent = 'จำลองการสแกนออกสำเร็จ →';
+    goto('scan');
+  });
+
   document.getElementById('manualCodeBtn').addEventListener('click', () => {
     document.getElementById('failFallbackBox').style.display = 'none';
     document.getElementById('failActionsDefault').style.display = 'none';
     document.getElementById('manualCodeForm').style.display = 'block';
   });
 
-  document.getElementById('submitManualCodeBtn').addEventListener('click', async () => {
-    const code = document.getElementById('manualCodeInput').value.trim();
-    const errorEl = document.getElementById('manualCodeError');
-    const expectedCode = currentEvent && currentEvent.manualCode ? String(currentEvent.manualCode) : null;
+  document.getElementById('requestExceptionBtn').addEventListener('click', () => {
+    document.getElementById('failFallbackBox').style.display = 'none';
+    document.getElementById('failActionsDefault').style.display = 'none';
+    document.getElementById('exceptionSentBox').style.display = 'block';
+    (async () => {
+      try {
+        const key = 'exception-requests';
+        const res = await window.storage.get(key, true);
+        const requests = res ? JSON.parse(res.value) : [];
+        requests.push({
+          eventId: currentEventId,
+          userEmail: currentUser ? currentUser.name : 'unknown',
+          reason: 'geo-fail',
+          status: 'pending',
+          requestedAt: new Date().toISOString()
+        });
+        await window.storage.set(key, JSON.stringify(requests), true);
+      } catch (e) { console.error('บันทึกคำขอเช็คชื่อกรณีพิเศษไม่สำเร็จ', e); }
+    })();
+  });
 
-    if (!code || (expectedCode && code !== expectedCode)) {
+  document.getElementById('submitManualCodeBtn').addEventListener('click', async () => {
+    const input = document.getElementById('manualCodeInput');
+    const errorEl = document.getElementById('manualCodeError');
+    const code = input.value.trim();
+    if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+      errorEl.textContent = 'กรุณากรอกรหัสตัวเลข 6 หลัก';
+      errorEl.classList.add('show');
+      return;
+    }
+    const validCode = currentEvent && currentEvent.manualCode ? currentEvent.manualCode : '123456';
+    if (code !== validCode) {
+      errorEl.textContent = 'รหัสไม่ถูกต้อง กรุณาลองใหม่';
       errorEl.classList.add('show');
       return;
     }
@@ -1548,31 +1614,13 @@
     await resolveSuccess();
   });
 
-  // ---------- Fallback: request exception check-in (pending teacher approval) ----------
-  document.getElementById('requestExceptionBtn').addEventListener('click', async () => {
-    try {
-      const key = "exception-requests:" + currentEventId;
-      const res = await window.storage.get(key, true);
-      const list = res ? JSON.parse(res.value) : [];
-      list.push({
-        userEmail: currentUser ? currentUser.name : "ไม่ระบุ",
-        requestedAt: new Date().toISOString(),
-        status: "pending"
-      });
-      await window.storage.set(key, JSON.stringify(list), true);
-    } catch (e) {
-      console.error("ส่งคำขอเช็คชื่อกรณีพิเศษไม่สำเร็จ", e);
-    }
-    document.getElementById('failFallbackBox').style.display = 'none';
-    document.getElementById('failActionsDefault').style.display = 'none';
-    document.getElementById('exceptionSentBox').style.display = 'block';
+  document.getElementById('manualCodeInput').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    document.getElementById('manualCodeError').classList.remove('show');
   });
 
-  // "เสร็จสิ้น (รอสแกนออกภายหลัง)" — just go back to Student home, checkout happens on next scan
-  document.getElementById('goCheckoutBtn').addEventListener('click', () => {
-    window.location.href = 'Student.html';
-  });
+  // Initial load
+  loadEventFromUrl();
 </script>
-
 </body>
 </html>
