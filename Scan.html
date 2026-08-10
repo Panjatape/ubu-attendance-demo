@@ -1273,7 +1273,7 @@
     if (!wrap || document.getElementById('camRetryBtn')) return;
     const btn = document.createElement('button');
     btn.id = 'camRetryBtn'; btn.className = 'btn-gold'; btn.textContent = '📷 แตะเพื่อเปิดกล้อง';
-    btn.style.cssText = 'position:relative; z-index:2; margin-top:10px;';
+    btn.style.cssText = 'position:absolute; top:58%; left:50%; transform:translateX(-50%); z-index:10; white-space:nowrap; font-size:14px; padding:12px 24px; width:auto; min-width:180px; box-shadow:0 8px 30px rgba(212,175,55,0.3), 0 0 0 1px rgba(212,175,55,0.2);';
     btn.addEventListener('click', () => { btn.remove(); const hint = document.getElementById('camHint'); if (hint) { hint.textContent = 'กำลังขออนุญาตเข้าถึงกล้อง...'; hint.classList.remove('error'); } startCamera(); });
     wrap.appendChild(btn);
   }
