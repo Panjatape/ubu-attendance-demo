@@ -398,7 +398,7 @@
     <div class="event-sub" id="eventSub">หอประชุมใหญ่ มหาวิทยาลัยอุบลราชธานี · เริ่ม 08:30 น.</div>
 
     <div class="qr-frame">
-      <img id="qrImage" alt="QR Code เช็คชื่อ" style="width:100%; height:auto; display:block; border-radius:4px;" src="">
+      <img id="qrImage" alt="QR Code เช็คชื่อ" style="width:100%; height:auto; display:none; border-radius:4px;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" id="qrPlaceholder">
         <rect width="200" height="200" fill="#fff"/>
         <rect x="10" y="10" width="40" height="40" fill="none" stroke="#132038" stroke-width="6"/>
@@ -577,13 +577,27 @@
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
     currentEventId = eventId;
-    if (!eventId) return;
+
+    // ถ้าไม่มี event ID → แสดง QR Demo + แจ้งเตือน
+    if (!eventId) {
+      renderDemoQr();
+      document.getElementById("eventTitle").textContent = "ไม่พบกิจกรรม";
+      document.getElementById("eventSub").textContent = "กรุณาเปิดหน้านี้จากหน้าจัดการกิจกรรม (Staff.html)";
+      return;
+    }
 
     try {
       const res = await window.storage.get("events-list", true);
       const events = res ? JSON.parse(res.value) : [];
       const ev = events.find(e => e.id === eventId);
-      if (!ev) return;
+
+      // ถ้าไม่เจอ event ใน storage → แสดง QR Demo
+      if (!ev) {
+        renderDemoQr();
+        document.getElementById("eventTitle").textContent = "ไม่พบข้อมูลกิจกรรม";
+        document.getElementById("eventSub").textContent = "กิจกรรม ID: " + eventId + " ไม่มีในระบบ";
+        return;
+      }
 
       const titleEl = document.getElementById("eventTitle");
       const subEl = document.getElementById("eventSub");
@@ -609,6 +623,7 @@
       startRosterPolling();        // เริ่ม polling เรียลไทม์
     } catch (e) {
       console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
+      renderDemoQr();
     }
   }
 
@@ -735,29 +750,62 @@
     const placeholder = document.getElementById('qrPlaceholder');
     if (!qrImg) return;
 
-    const payload = JSON.stringify({ eventId: ev.id });
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(payload);
+    // สร้าง payload สำหรับสแกน
+    const payload = JSON.stringify({ eventId: ev ? ev.id : 'demo' });
+
+    // API หลัก: qrserver
+    const primaryUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(payload);
+    // API สำรอง: Google Chart (ถ้าหลักพัง)
+    const fallbackUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=400x400&chld=L|0&chl=' + encodeURIComponent(payload);
+
+    let triedFallback = false;
 
     qrImg.onload = () => {
       qrImg.style.display = 'block';
       if (placeholder) placeholder.style.display = 'none';
     };
     qrImg.onerror = () => {
-      qrImg.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
+      if (!triedFallback) {
+        triedFallback = true;
+        qrImg.src = fallbackUrl; // ลอง API สำรอง
+      } else {
+        qrImg.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+      }
     };
-    qrImg.src = qrUrl;
+    qrImg.src = primaryUrl;
 
-    if (!ev.manualCode) {
+    // Manual fallback code
+    if (ev && !ev.manualCode) {
       ev.manualCode = String(Math.abs(hashCode(ev.id))).slice(0, 6).padStart(6, '0');
       persistManualCode(ev);
     }
     const codeEl = document.getElementById('manualCodeText');
     const codeRow = document.getElementById('manualCodeDisplay');
-    if (codeEl && ev.manualCode) {
-      codeEl.textContent = ev.manualCode;
-      if (codeRow) codeRow.style.display = 'block';
+    if (codeEl) {
+      if (ev && ev.manualCode) {
+        codeEl.textContent = ev.manualCode;
+        if (codeRow) codeRow.style.display = 'block';
+      } else {
+        codeEl.textContent = '------';
+        if (codeRow) codeRow.style.display = 'block';
+      }
     }
+  }
+
+  // ถ้าไม่มี event ID → แสดง QR Demo ที่สแกนแล้วแจ้งเตือน
+  function renderDemoQr() {
+    const qrImg = document.getElementById('qrImage');
+    const placeholder = document.getElementById('qrPlaceholder');
+    if (!qrImg) return;
+    const demoPayload = JSON.stringify({ eventId: 'demo', msg: 'ไม่พบกิจกรรม กรุณาเปิดจากหน้าจัดการกิจกรรม' });
+    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(demoPayload);
+    qrImg.onload = () => {
+      qrImg.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    };
+    qrImg.onerror = () => { qrImg.style.display = 'none'; if (placeholder) placeholder.style.display = 'block'; };
+    qrImg.src = url;
   }
 
   function hashCode(str) {
