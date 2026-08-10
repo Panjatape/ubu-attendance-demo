@@ -1296,14 +1296,53 @@
     else { scanLoopHandle = requestAnimationFrame(scanFrame); }
   }
 
-  function handleQrDetected(rawText) {
-    qrHasFired = true; stopCamera();
+  async function handleQrDetected(rawText) {
+    qrHasFired = true;
+    stopCamera();
+
     let scannedEventId = null;
-    try { const parsed = JSON.parse(rawText); scannedEventId = parsed.eventId || parsed.CourseID || parsed.SessionID || null; }
-    catch (e) { scannedEventId = rawText.trim(); }
-    if (!currentEventId) { currentEventId = scannedEventId; goto('verify'); runVerification(); return; }
-    if (scannedEventId && scannedEventId === currentEventId) { goto('verify'); runVerification(); }
-    else { resolveFail('wrong-qr'); }
+    try {
+      const parsed = JSON.parse(rawText);
+      scannedEventId = parsed.eventId || parsed.CourseID || parsed.SessionID || null;
+    } catch (e) {
+      scannedEventId = rawText.trim();
+    }
+
+    if (!scannedEventId) {
+      await resolveFail('wrong-qr');
+      return;
+    }
+
+    // เมื่อเปิด Scan.html โดยไม่มี ?event=... currentEvent จะยังไม่มีข้อมูล
+    // จึงต้องโหลดกิจกรรมจาก eventId ที่อ่านได้จาก QR ก่อนเริ่มตรวจสอบ GPS
+    if (!currentEventId) currentEventId = scannedEventId;
+
+    if (scannedEventId !== currentEventId) {
+      await resolveFail('wrong-qr');
+      return;
+    }
+
+    try {
+      const res = await window.storage.get('events-list', true);
+      const events = res ? JSON.parse(res.value) : [];
+      currentEvent = events.find(ev => ev.id === currentEventId) || null;
+
+      if (!currentEvent) {
+        await resolveFail('network');
+        return;
+      }
+
+      currentEventName = currentEvent.title || currentEventName;
+      const radiusEl = document.getElementById('configuredRadius');
+      if (radiusEl && currentEvent.geoRadius) radiusEl.textContent = currentEvent.geoRadius;
+    } catch (err) {
+      console.error('โหลดกิจกรรมจาก QR ไม่สำเร็จ', err);
+      await resolveFail('network');
+      return;
+    }
+
+    goto('verify');
+    await runVerification();
   }
 
   loadEventFromUrl().then(() => {
@@ -1619,8 +1658,6 @@
     document.getElementById('manualCodeError').classList.remove('show');
   });
 
-  // Initial load
-  loadEventFromUrl();
 </script>
 </body>
 </html>
