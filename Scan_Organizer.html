@@ -564,14 +564,13 @@
       console.error("บันทึกรหัสสำรองไม่สำเร็จ", e);
     }
   }
-  loadEventFromUrl();
 
   /* ============================================================
      REAL-TIME ROSTER — อ่านจาก attendance-records จริง
      ============================================================ */
-  let currentEventId = null;
-  let displayedRecordIds = new Set(); // เก็บ id ที่แสดงแล้ว ไม่ให้กระพริบ
-  let rosterPollingInterval = null;
+  var currentEventId = null;
+  var displayedRecordIds = new Set();
+  var rosterPollingInterval = null;
 
   async function loadEventFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -885,6 +884,9 @@
     localStorage.removeItem("ubu_session");
     window.location.href = "index.html";
   });
+
+  // Start everything
+  loadEventFromUrl();
 
 </script>
 
