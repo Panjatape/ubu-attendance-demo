@@ -466,118 +466,18 @@
 </div>
 
 <script>
-  // Load the specific event this screen is projecting, based on ?event=<id> in the URL.
-  // Falls back to demo content if no event ID is given or the event can't be found
-  // (e.g. opened directly without going through Staff.html).
-  async function loadEventFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const eventId = params.get("event");
-    if (!eventId) return;
-
-    try {
-      const res = await window.storage.get("events-list", true);
-      const events = res ? JSON.parse(res.value) : [];
-      const ev = events.find(e => e.id === eventId);
-      if (!ev) return;
-
-      const titleEl = document.getElementById("eventTitle");
-      const subEl = document.getElementById("eventSub");
-      const registeredEl = document.getElementById("registeredCount");
-
-      if (titleEl) titleEl.textContent = ev.title || "(ไม่มีชื่อกิจกรรม)";
-      if (subEl) {
-        const parts = [];
-        if (ev.date) {
-          try {
-            parts.push(new Date(ev.date).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }));
-          } catch (e) { parts.push(ev.date); }
-        }
-        if (ev.host) parts.push("ผู้จัด: " + ev.host);
-        subEl.textContent = parts.length ? parts.join(" · ") : "ไม่ระบุวันที่/ผู้จัด";
-      }
-      if (registeredEl && ev.kpiAttendTarget) {
-        registeredEl.textContent = ev.kpiAttendTarget;
-      }
-
-      renderRealQrCode(ev);
-    } catch (e) {
-      console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
-    }
-  }
-
-  // Renders an actual scannable QR code (via api.qrserver.com) encoding the event's id
-  // as JSON, matching the format Scan.html expects when decoding with jsQR.
-  // Also shows/generates a manual fallback code for the "กรอกรหัสกิจกรรมด้วยตนเอง" flow.
-  function renderRealQrCode(ev) {
-    const qrImg = document.getElementById('qrImage');
-    const placeholder = document.getElementById('qrPlaceholder');
-    if (!qrImg) return;
-
-    const payload = JSON.stringify({ eventId: ev.id });
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(payload);
-
-    qrImg.onload = () => {
-      qrImg.style.display = 'block';
-      if (placeholder) placeholder.style.display = 'none';
-    };
-    qrImg.onerror = () => {
-      // If the QR generation API is unreachable, keep showing the decorative
-      // placeholder and rely on the manual code fallback instead.
-      qrImg.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
-    };
-    qrImg.src = qrUrl;
-
-    // Manual fallback code: derive a stable-looking 6-digit code from the event id
-    // so students who can't scan can still be checked in via Scan.html's manual entry.
-    if (!ev.manualCode) {
-      ev.manualCode = String(Math.abs(hashCode(ev.id))).slice(0, 6).padStart(6, '0');
-      persistManualCode(ev);
-    }
-    const codeEl = document.getElementById('manualCodeText');
-    const codeRow = document.getElementById('manualCodeDisplay');
-    if (codeEl && ev.manualCode) {
-      codeEl.textContent = ev.manualCode;
-      if (codeRow) codeRow.style.display = 'block';
-    }
-  }
-
-  function hashCode(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      hash |= 0;
-    }
-    return hash;
-  }
-
-  async function persistManualCode(ev) {
-    try {
-      const res = await window.storage.get("events-list", true);
-      const events = res ? JSON.parse(res.value) : [];
-      const idx = events.findIndex(e => e.id === ev.id);
-      if (idx !== -1) {
-        events[idx].manualCode = ev.manualCode;
-        await window.storage.set("events-list", JSON.stringify(events), true);
-      }
-    } catch (e) {
-      console.error("บันทึกรหัสสำรองไม่สำเร็จ", e);
-    }
-  }
-
   /* ============================================================
-     REAL-TIME ROSTER — อ่านจาก attendance-records จริง
+     EVENT STATE + REAL-TIME ROSTER
      ============================================================ */
-  var currentEventId = null;
-  var displayedRecordIds = new Set();
-  var rosterPollingInterval = null;
+  let currentEventId = null;
+  let displayedRecordIds = new Set();
+  let rosterPollingInterval = null;
 
   async function loadEventFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
     currentEventId = eventId;
 
-    // ถ้าไม่มี event ID → แสดง QR Demo + แจ้งเตือน
     if (!eventId) {
       renderDemoQr();
       document.getElementById("eventTitle").textContent = "ไม่พบกิจกรรม";
@@ -590,7 +490,6 @@
       const events = res ? JSON.parse(res.value) : [];
       const ev = events.find(e => e.id === eventId);
 
-      // ถ้าไม่เจอ event ใน storage → แสดง QR Demo
       if (!ev) {
         renderDemoQr();
         document.getElementById("eventTitle").textContent = "ไม่พบข้อมูลกิจกรรม";
@@ -607,19 +506,24 @@
         const parts = [];
         if (ev.date) {
           try {
-            parts.push(new Date(ev.date).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }));
-          } catch (e) { parts.push(ev.date); }
+            parts.push(new Date(ev.date).toLocaleDateString("th-TH", {
+              day: "numeric", month: "short", year: "numeric"
+            }));
+          } catch (e) {
+            parts.push(ev.date);
+          }
         }
         if (ev.host) parts.push("ผู้จัด: " + ev.host);
         subEl.textContent = parts.length ? parts.join(" · ") : "ไม่ระบุวันที่/ผู้จัด";
       }
+
       if (registeredEl && ev.kpiAttendTarget) {
         registeredEl.textContent = ev.kpiAttendTarget;
       }
 
       renderRealQrCode(ev);
-      await syncRoster();          // โหลดครั้งแรก
-      startRosterPolling();        // เริ่ม polling เรียลไทม์
+      await syncRoster();
+      startRosterPolling();
     } catch (e) {
       console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
       renderDemoQr();
