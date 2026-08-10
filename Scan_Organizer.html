@@ -375,6 +375,7 @@
   }
   .search-row input::placeholder{ color:#6E7893; }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -565,118 +566,262 @@
   }
   loadEventFromUrl();
 
-  const names = [
-    "ณัฐชนก ใจดี","ปวีณา สายทอง","ธนภัทร ศรีสุข","กมลชนก อินทร์แก้ว","สุพิชญา วงศ์คำ",
-    "ภาณุพงศ์ แสงทอง","อรวรรณ บุญมี","ชัยวัฒน์ ทองดี","พิมพ์ชนก ศรีวิไล","กิตติศักดิ์ มั่นคง",
-    "วรรณิศา แก้วมณี","ธีรภัทร์ พูลสวัสดิ์","ศศิธร รุ่งเรือง","อภิสิทธิ์ ชาญชัย","เบญจวรรณ ทิพย์รัตน์",
-    "ปิยะพงษ์ สุขใจ","นันท์นภัส เจริญพร","วีรยุทธ คำแก้ว","สิริยากร ทองแท้","ปัณณวิชญ์ พิมพา"
-  ];
-  const usedNames = [];
-  let checkedCount = 0;
-  const rosterScroll = document.getElementById('rosterScroll');
-  const emptyRoster = document.getElementById('emptyRoster');
-  const checkedCountEl = document.getElementById('checkedCount');
+  /* ============================================================
+     REAL-TIME ROSTER — อ่านจาก attendance-records จริง
+     ============================================================ */
+  let currentEventId = null;
+  let displayedRecordIds = new Set(); // เก็บ id ที่แสดงแล้ว ไม่ให้กระพริบ
+  let rosterPollingInterval = null;
 
-  function initials(name){
-    const parts = name.split(' ');
-    return parts[0].slice(0,2);
-  }
-  function studentId(){
-    return '65' + Math.floor(20000000 + Math.random()*9999999);
-  }
-  function nowTime(){
-    const d = new Date();
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  async function loadEventFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("event");
+    currentEventId = eventId;
+    if (!eventId) return;
+
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      const ev = events.find(e => e.id === eventId);
+      if (!ev) return;
+
+      const titleEl = document.getElementById("eventTitle");
+      const subEl = document.getElementById("eventSub");
+      const registeredEl = document.getElementById("registeredCount");
+
+      if (titleEl) titleEl.textContent = ev.title || "(ไม่มีชื่อกิจกรรม)";
+      if (subEl) {
+        const parts = [];
+        if (ev.date) {
+          try {
+            parts.push(new Date(ev.date).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }));
+          } catch (e) { parts.push(ev.date); }
+        }
+        if (ev.host) parts.push("ผู้จัด: " + ev.host);
+        subEl.textContent = parts.length ? parts.join(" · ") : "ไม่ระบุวันที่/ผู้จัด";
+      }
+      if (registeredEl && ev.kpiAttendTarget) {
+        registeredEl.textContent = ev.kpiAttendTarget;
+      }
+
+      renderRealQrCode(ev);
+      await syncRoster();          // โหลดครั้งแรก
+      startRosterPolling();        // เริ่ม polling เรียลไทม์
+    } catch (e) {
+      console.error("โหลดข้อมูลกิจกรรมไม่สำเร็จ", e);
+    }
   }
 
-  function addCheckIn(){
-    if(usedNames.length >= names.length) return;
-    let name;
-    do { name = names[Math.floor(Math.random()*names.length)]; } while(usedNames.includes(name));
-    usedNames.push(name);
-    checkedCount++;
-    checkedCountEl.textContent = checkedCount;
+  // Polling ทุก 1.5 วินาที (localStorage ไม่มี push ในแท็บเดียวกัน)
+  function startRosterPolling() {
+    if (rosterPollingInterval) clearInterval(rosterPollingInterval);
+    rosterPollingInterval = setInterval(syncRoster, 1500);
+  }
 
-    if(emptyRoster && emptyRoster.parentNode){
-      emptyRoster.remove();
+  async function syncRoster() {
+    if (!currentEventId) return;
+    try {
+      const res = await window.storage.get("attendance-records", true);
+      const allRecords = res ? JSON.parse(res.value) : [];
+      const eventRecords = allRecords
+        .filter(r => r.eventId === currentEventId && r.checkInTime)
+        .sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime)); // ใหม่สุดก่อน
+
+      updateStats(eventRecords.length);
+      renderRosterRows(eventRecords);
+    } catch (e) {
+      console.error("ซิงก์รายชื่อไม่สำเร็จ", e);
+    }
+  }
+
+  function updateStats(count) {
+    const el = document.getElementById("checkedCount");
+    if (el) el.textContent = count;
+  }
+
+  function renderRosterRows(records) {
+    const scroll = document.getElementById("rosterScroll");
+    const empty = document.getElementById("emptyRoster");
+    if (!scroll) return;
+
+    if (records.length === 0) {
+      if (empty && !empty.parentNode) scroll.appendChild(empty);
+      return;
     }
 
-    document.querySelectorAll('.badge-new').forEach(b => b.remove());
+    // ลบ empty state ถ้ามีข้อมูล
+    if (empty && empty.parentNode) empty.remove();
 
-    const row = document.createElement('div');
-    row.className = 'roster-row';
-    row.dataset.name = name.toLowerCase();
-    row.dataset.id = studentId();
+    // เก็บ row ที่มีอยู่แล้ว (ไม่ให้ render ใหม่ซ้ำ → กระพริบ)
+    const existingRows = Array.from(scroll.querySelectorAll(".roster-row"));
+    const existingByKey = new Map();
+    existingRows.forEach(row => {
+      const key = row.dataset.key;
+      if (key) existingByKey.set(key, row);
+    });
+
+    // สร้าง/อัปเดต row ตามลำดับใหม่
+    const newOrder = [];
+    records.forEach((rec, idx) => {
+      const key = rec.userEmail + "|" + rec.checkInTime;
+      let row = existingByKey.get(key);
+
+      if (!row) {
+        row = buildRosterRow(rec, key);
+        if (idx === 0) {
+          // รายการใหม่สุด → ใส่ badge "ใหม่"
+          const badge = row.querySelector(".badge-new");
+          if (badge) badge.style.display = "inline-flex";
+        }
+      } else {
+        // เอา badge ออกจากรายการเก่า
+        const badge = row.querySelector(".badge-new");
+        if (badge) badge.style.display = "none";
+      }
+
+      newOrder.push(row);
+    });
+
+    // Re-order DOM ให้ตรงกับลำดับใหม่ (prepend รายการใหม่สุด)
+    scroll.innerHTML = "";
+    newOrder.forEach(row => scroll.appendChild(row));
+
+    // Auto-scroll ถ้ามีรายการใหม่เข้ามา
+    if (records.length > displayedRecordIds.size) {
+      scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    // อัปเดต set
+    displayedRecordIds = new Set(records.map(r => r.userEmail + "|" + r.checkInTime));
+  }
+
+  function buildRosterRow(rec, key) {
+    const row = document.createElement("div");
+    row.className = "roster-row";
+    row.dataset.key = key;
+    row.dataset.name = (rec.userEmail || "").toLowerCase();
+    row.dataset.id = rec.userEmail || "";
+
+    const name = rec.userEmail || "ไม่ระบุชื่อ";
+    const timeStr = rec.checkInTime
+      ? new Date(rec.checkInTime).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      : "-";
+
     row.innerHTML =
       '<span class="av">' + initials(name) + '</span>' +
-      '<div class="info"><div class="name">' + name + '</div><div class="id">' + row.dataset.id + '@ubu.ac.th</div></div>' +
-      '<span class="time">' + nowTime() + '</span>' +
-      '<span class="badge-new">ใหม่</span>';
-    rosterScroll.appendChild(row);
-    rosterScroll.scrollTop = rosterScroll.scrollHeight;
+      '<div class="info"><div class="name">' + escapeHtml(name) + '</div><div class="id">' + escapeHtml(rec.userEmail || "") + '</div></div>' +
+      '<span class="time">' + timeStr + '</span>' +
+      '<span class="badge-new" style="display:none;">ใหม่</span>';
+    return row;
   }
 
-  let checkinTimer = setInterval(() => {
-    if(usedNames.length < names.length){
-      addCheckIn();
-    } else {
-      clearInterval(checkinTimer);
+  function initials(name) {
+    if (!name) return "?";
+    const parts = name.split(/[@\s]+/);
+    return parts[0].slice(0, 2);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /* ============================================================
+     QR CODE & MANUAL FALLBACK
+     ============================================================ */
+  function renderRealQrCode(ev) {
+    const qrImg = document.getElementById('qrImage');
+    const placeholder = document.getElementById('qrPlaceholder');
+    if (!qrImg) return;
+
+    const payload = JSON.stringify({ eventId: ev.id });
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' + encodeURIComponent(payload);
+
+    qrImg.onload = () => {
+      qrImg.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    };
+    qrImg.onerror = () => {
+      qrImg.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'block';
+    };
+    qrImg.src = qrUrl;
+
+    if (!ev.manualCode) {
+      ev.manualCode = String(Math.abs(hashCode(ev.id))).slice(0, 6).padStart(6, '0');
+      persistManualCode(ev);
     }
-  }, 2600);
+    const codeEl = document.getElementById('manualCodeText');
+    const codeRow = document.getElementById('manualCodeDisplay');
+    if (codeEl && ev.manualCode) {
+      codeEl.textContent = ev.manualCode;
+      if (codeRow) codeRow.style.display = 'block';
+    }
+  }
 
-  addCheckIn();
+  function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
 
-  document.getElementById('rosterSearch').addEventListener('input', (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    document.querySelectorAll('.roster-row').forEach(row => {
-      const match = row.dataset.name.includes(q) || row.dataset.id.includes(q);
-      row.style.display = match ? '' : 'none';
-    });
-  });
+  async function persistManualCode(ev) {
+    try {
+      const res = await window.storage.get("events-list", true);
+      const events = res ? JSON.parse(res.value) : [];
+      const idx = events.findIndex(e => e.id === ev.id);
+      if (idx !== -1) {
+        events[idx].manualCode = ev.manualCode;
+        await window.storage.set("events-list", JSON.stringify(events), true);
+      }
+    } catch (e) {
+      console.error("บันทึกรหัสสำรองไม่สำเร็จ", e);
+    }
+  }
 
+  /* ============================================================
+     COUNTDOWN & CONTROLS
+     ============================================================ */
   const totalSeconds = 600;
   let remaining = 587;
   const ring = document.getElementById('refreshRing');
   const countdownEl = document.getElementById('countdown');
   const circumference = 53.4;
 
-  function tickCountdown(){
+  function tickCountdown() {
     remaining--;
-    if(remaining <= 0) remaining = totalSeconds;
-    const mm = String(Math.floor(remaining/60)).padStart(2,'0');
-    const ss = String(remaining%60).padStart(2,'0');
+    if (remaining <= 0) remaining = totalSeconds;
+    const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const ss = String(remaining % 60).padStart(2, '0');
     countdownEl.textContent = mm + ':' + ss;
-    const offset = circumference * (1 - remaining/totalSeconds);
+    const offset = circumference * (1 - remaining / totalSeconds);
     ring.style.strokeDashoffset = offset;
   }
   setInterval(tickCountdown, 1000);
 
-  const dots = document.getElementById('qrDots');
-  if (dots) {
-    // Legacy decorative dots (kept only if an older cached page still has the element).
-    let dotsSvg = '';
-    for(let i=0;i<12;i++){
-      for(let j=0;j<12;j++){
-        if((i+j*3)%5===0 || (i*2+j)%7===0){
-          if((i<5&&j<5)||(i>6&&j<5)||(i<5&&j>6)) continue;
-          dotsSvg += '<rect x="' + (55+i*8) + '" y="' + (55+j*8) + '" width="7" height="7"/>';
-        }
-      }
-    }
-    dots.innerHTML = dotsSvg;
-  }
+  document.getElementById('rosterSearch').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.roster-row').forEach(row => {
+      const match = (row.dataset.name || "").includes(q) || (row.dataset.id || "").includes(q);
+      row.style.display = match ? '' : 'none';
+    });
+  });
 
   document.getElementById('close-checkin-btn').addEventListener('click', () => {
     if (confirm('ยืนยันปิดการเช็คชื่อกิจกรรมนี้และกลับไปหน้าจัดการกิจกรรม?')) {
+      if (rosterPollingInterval) clearInterval(rosterPollingInterval);
       window.location.href = 'Staff.html';
     }
   });
 
-  // Session guard: this screen is for organizers only.
+  // Session guard
   (function enforceSession() {
     let session = null;
     try { session = JSON.parse(localStorage.getItem("ubu_session")); } catch (e) {}
-
     if (!session) {
       window.location.href = "index.html";
       return;
@@ -688,9 +833,11 @@
   })();
 
   document.getElementById("logout-link").addEventListener("click", () => {
+    if (rosterPollingInterval) clearInterval(rosterPollingInterval);
     localStorage.removeItem("ubu_session");
     window.location.href = "index.html";
   });
+
 </script>
 
 </body>
